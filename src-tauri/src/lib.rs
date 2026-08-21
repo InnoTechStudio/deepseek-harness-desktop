@@ -60,17 +60,17 @@ pub fn run() {
         .expect("error while running tauri application")
         .run(|app_handle, event| {
             // 托盘事件
-            if let tauri::RunEvent::TrayIconEvent(tray_event) = event {
-                if let TrayIconEvent::Click {
+            if let tauri::RunEvent::TrayIconEvent(
+                TrayIconEvent::Click {
                     button: MouseButton::Left,
                     button_state: MouseButtonState::Up,
                     ..
-                } = tray_event
-                {
-                    if let Some(window) = app_handle.get_webview_window("main") {
-                        let _ = window.show();
-                        let _ = window.set_focus();
-                    }
+                },
+            ) = event
+            {
+                if let Some(window) = app_handle.get_webview_window("main") {
+                    let _ = window.show();
+                    let _ = window.set_focus();
                 }
             }
         });

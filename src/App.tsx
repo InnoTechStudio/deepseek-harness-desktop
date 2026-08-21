@@ -169,7 +169,10 @@ function App() {
         <iframe src={dshUrl} title="DeepSeek Harness" className="main-iframe" />
         <div className="statusbar">
           <span>内核 v{state?.installedVersion ?? "?"}</span>
-          <button onClick={() => setShowSettings((v) => !v)}>设置</button>
+          <span className="status-actions">
+            <button onClick={() => setDshUrl(`${dshUrl}settings/`)}>插件市场</button>
+            <button onClick={() => setShowSettings((v) => !v)}>设置</button>
+          </span>
         </div>
         {showSettings && (
           <div className="settings-panel">

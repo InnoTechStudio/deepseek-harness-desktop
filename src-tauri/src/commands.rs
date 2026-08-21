@@ -32,7 +32,7 @@ pub async fn get_state(state: State<'_, Arc<AppState>>) -> Result<serde_json::Va
 /// 初始化：确保 Node + 内核就绪。返回状态。
 #[tauri::command]
 pub async fn bootstrap(app: AppHandle, state: State<'_, Arc<AppState>>) -> Result<String, String> {
-    use crate::paths::Paths;
+    
     let paths = state.paths();
     std::fs::create_dir_all(&paths.root).map_err(|e| e.to_string())?;
     std::fs::create_dir_all(&paths.log_dir).map_err(|e| e.to_string())?;
@@ -74,7 +74,7 @@ pub async fn install_kernel(
     app: AppHandle,
     state: State<'_, Arc<AppState>>,
 ) -> Result<String, String> {
-    use crate::paths::Paths;
+    
     let paths = state.paths();
     log_to_file(paths, "install_kernel: start");
     let (version, registry) = kernel::latest_kernel_version(&state.client, paths)
@@ -128,7 +128,8 @@ async fn wait_for_port(child: &mut std::process::Child, state: &AppState) -> Res
         let (tx, mut rx) = tokio::sync::mpsc::channel::<u16>(4);
         std::thread::spawn(move || {
             let reader = BufReader::new(&mut so);
-            for l in reader.lines().flatten() {
+            for l in reader.lines() {
+                let Ok(l) = l else { break };
                 if let Some(p) = crate::dsh::parse_port_from_line(&l) {
                     let _ = tx.blocking_send(p);
                     break;
