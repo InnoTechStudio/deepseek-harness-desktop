@@ -255,6 +255,24 @@ pub async fn restart_dsh_impl(app: &AppHandle, state: &Arc<AppState>) -> Result<
     Ok(port)
 }
 
+/// 重启 dsh 服务（前端调用，插件市场更新后需要重启生效）
+#[tauri::command]
+pub async fn restart_dsh(
+    app: AppHandle,
+    state: State<'_, Arc<AppState>>,
+) -> Result<u16, String> {
+    // 先停掉旧进程
+    {
+        let mut g = state.dsh.lock().await;
+        if let Some(d) = g.as_mut() {
+            let _ = d.child.kill();
+            let _ = d.child.wait();
+        }
+        *g = None;
+    }
+    restart_dsh_impl(&app, &state).await
+}
+
 /// 跳过某版本
 #[tauri::command]
 pub async fn skip_version(

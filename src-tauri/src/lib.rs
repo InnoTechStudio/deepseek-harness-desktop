@@ -53,6 +53,7 @@ pub fn run() {
             commands::stop_dsh,
             commands::check_update,
             commands::apply_update,
+            commands::restart_dsh,
             commands::skip_version,
             commands::rollback,
             commands::confirm_healthy,
@@ -60,11 +61,11 @@ pub fn run() {
             commands::open_data_dir,
         ])
         .on_window_event(|window, event| {
-            // 关闭窗口 → 最小化到托盘（不退出）
+            // 关闭窗口 → 直接退出程序（托盘恢复在 macOS 上不可靠，退出更符合预期）
             if let WindowEvent::CloseRequested { api, .. } = event {
                 if window.label() == "main" {
                     api.prevent_close();
-                    let _ = window.hide();
+                    quit_app(window.app_handle());
                 }
             }
         })
@@ -170,7 +171,13 @@ fn spawn_update_checker(app: tauri::AppHandle) {
         loop {
             // 等应用就绪后先查一次，然后每 6h 一次
             std::thread::sleep(std::time::Duration::from_secs(20));
-            check_and_notify(&app);
+            // 后台检查：静默（已是最新版不打扰）
+            if let Some(state) = app
+                .try_state::<Arc<AppState>>()
+                .map(|s| s.inner().clone())
+            {
+                run_check_notify(app.clone(), state, false);
+            }
             std::thread::sleep(std::time::Duration::from_secs(6 * 3600));
         }
     });
@@ -213,32 +220,57 @@ fn check_and_notify(app: &tauri::AppHandle) {
         return;
     };
     let app = app.clone();
-    run_check_notify(app, state);
+    run_check_notify(app, state, true);
 }
 
-#[allow(clippy::too_many_arguments)]
-fn run_check_notify(app: tauri::AppHandle, state: Arc<AppState>) {
+/// 检查内核更新并弹窗。`manual` 为 true 时（用户点菜单"检查更新"），
+/// 即使已是最新版也弹"已是最新版"提示；后台自动检查则静默。
+fn run_check_notify(app: tauri::AppHandle, state: Arc<AppState>, manual: bool) {
     tauri::async_runtime::spawn(async move {
+        use tauri_plugin_dialog::DialogExt;
         // 只在已装内核时检查（避免首启时和引导并发）
         let installed = crate::kernel::active_kernel_version(state.paths());
         if installed.is_none() {
+            if manual {
+                let _ = app
+                    .dialog()
+                    .message("内核尚未安装，请先完成初始化。")
+                    .title("DSH Desk")
+                    .blocking_show();
+            }
             return;
         }
         let Ok((latest, _registry)) =
             crate::kernel::latest_kernel_version(&state.client, state.paths()).await
         else {
+            if manual {
+                let _ = app
+                    .dialog()
+                    .message("无法连接更新源，请检查网络后重试。")
+                    .title("DSH Desk")
+                    .blocking_show();
+            }
             return;
         };
         let available = match &installed {
             Some(i) => crate::kernel::compare_versions(&latest, i) > 0,
             None => false,
         };
-        if !available {
-            return;
-        }
         // 跳过检查
         let skipped = crate::paths::Settings::load(state.paths()).skipped_kernel_version;
-        if skipped.as_deref() == Some(latest.as_str()) {
+        let skipped_this = skipped.as_deref() == Some(latest.as_str());
+
+        if !available || skipped_this {
+            if manual {
+                let _ = app
+                    .dialog()
+                    .message(format!(
+                        "已是最新版本 v{latest}（当前 v{}）。",
+                        installed.unwrap_or_default()
+                    ))
+                    .title("DSH Desk")
+                    .blocking_show();
+            }
             return;
         }
         let installed_s = installed.unwrap_or_default();
@@ -246,7 +278,6 @@ fn run_check_notify(app: tauri::AppHandle, state: Arc<AppState>) {
         let app2 = app.clone();
         let state2 = state.clone();
         tauri::async_runtime::spawn(async move {
-            use tauri_plugin_dialog::DialogExt;
             let yes = app2
                 .dialog()
                 .message(format!(
