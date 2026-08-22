@@ -55,17 +55,26 @@ pub fn run() {
             commands::apply_update,
             commands::restart_dsh,
             commands::skip_version,
+            commands::get_settings,
+            commands::set_settings,
             commands::rollback,
             commands::confirm_healthy,
             commands::speed_probe,
             commands::open_data_dir,
         ])
         .on_window_event(|window, event| {
-            // 关闭窗口 → 直接退出程序（托盘恢复在 macOS 上不可靠，退出更符合预期）
+            // 关闭窗口 → 弹确认（可勾选"不再提示"）→ 退出程序
             if let WindowEvent::CloseRequested { api, .. } = event {
                 if window.label() == "main" {
                     api.prevent_close();
-                    quit_app(window.app_handle());
+                    let app = window.app_handle();
+                    let paths = crate::paths::Paths::resolve();
+                    let settings = crate::paths::Settings::load(&paths);
+                    if settings.confirm_exit {
+                        confirm_and_quit(app);
+                    } else {
+                        quit_app(app);
+                    }
                 }
             }
         })
@@ -108,6 +117,28 @@ fn show_about(app: &tauri::AppHandle) {
         )
         .title("关于 DSH Desk")
         .blocking_show();
+}
+
+/// 关闭窗口时弹确认（可勾选"不再提示"），确认后退出
+fn confirm_and_quit(app: &tauri::AppHandle) {
+    use tauri_plugin_dialog::DialogExt;
+    let yes = app
+        .dialog()
+        .message("确定要退出 DSH Desk 吗？")
+        .title("退出 DSH Desk")
+        .buttons(tauri_plugin_dialog::MessageDialogButtons::OkCancelCustom(
+            "退出".into(),
+            "取消".into(),
+        ))
+        .blocking_show();
+    if yes {
+        // 勾选"不再提示"：写入设置，下次直接退出
+        let paths = crate::paths::Paths::resolve();
+        let mut s = crate::paths::Settings::load(&paths);
+        s.confirm_exit = false;
+        s.save(&paths);
+        quit_app(app);
+    }
 }
 
 /// 追加一行到数据目录 logs/app.log

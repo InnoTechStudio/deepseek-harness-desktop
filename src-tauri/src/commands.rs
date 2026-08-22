@@ -286,6 +286,36 @@ pub async fn skip_version(
     Ok(())
 }
 
+/// 读取设置（前端/插件查询）
+#[tauri::command]
+pub async fn get_settings(state: State<'_, Arc<AppState>>) -> Result<serde_json::Value, String> {
+    let s = crate::paths::Settings::load(state.paths());
+    Ok(serde_json::json!({
+        "autoCheckUpdates": s.auto_check_updates,
+        "confirmExit": s.confirm_exit,
+        "skippedKernelVersion": s.skipped_kernel_version,
+    }))
+}
+
+/// 更新设置（前端/插件写入）
+#[tauri::command]
+pub async fn set_settings(
+    state: State<'_, Arc<AppState>>,
+    auto_check_updates: Option<bool>,
+    confirm_exit: Option<bool>,
+) -> Result<(), String> {
+    let paths = state.paths();
+    let mut s = crate::paths::Settings::load(paths);
+    if let Some(v) = auto_check_updates {
+        s.auto_check_updates = v;
+    }
+    if let Some(v) = confirm_exit {
+        s.confirm_exit = v;
+    }
+    s.save(paths);
+    Ok(())
+}
+
 /// 回退到上一版本
 #[tauri::command]
 pub async fn rollback(state: State<'_, Arc<AppState>>) -> Result<(), String> {

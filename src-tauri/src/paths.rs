@@ -58,6 +58,8 @@ pub struct Settings {
     pub auto_check_updates: bool,
     /// 内核版本来源缓存（测速选出的最快 npm 镜像）
     pub preferred_registry: Option<String>,
+    /// 关闭窗口时是否弹确认（默认 true；勾选"不再提示"后为 false）
+    pub confirm_exit: bool,
 }
 
 impl Settings {
@@ -69,6 +71,7 @@ impl Settings {
                 skipped_kernel_version: None,
                 auto_check_updates: true,
                 preferred_registry: None,
+                confirm_exit: true,
             })
     }
 
