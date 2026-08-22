@@ -30,11 +30,23 @@ pub fn spawn_dsh(paths: &Paths, _profile: &str) -> Result<Child, String> {
         ])
         .env("DSH_HOME", &dsh_home)
         .env("NODE_OPTIONS", "--no-warnings")
+        // 把 node 目录放 PATH 首位，让 dsh 能调用 pnpm（插件市场需要）
+        .env("PATH", prepend_path(node_exe.parent().unwrap()))
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
 
     let child = cmd.spawn().map_err(|e| format!("启动 dsh 失败: {e}"))?;
     Ok(child)
+}
+
+fn prepend_path(node_bin_dir: &std::path::Path) -> std::ffi::OsString {
+    let mut paths = vec![node_bin_dir.to_path_buf()];
+    if let Ok(existing) = std::env::var("PATH") {
+        for p in std::env::split_paths(&existing) {
+            paths.push(p);
+        }
+    }
+    std::env::join_paths(paths).unwrap_or_default()
 }
 
 /// 从进程输出里解析 "http://127.0.0.1:<port>"。

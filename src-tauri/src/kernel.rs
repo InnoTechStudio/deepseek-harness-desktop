@@ -219,6 +219,42 @@ pub fn confirm_healthy_cleanup(paths: &Paths) {
     }
 }
 
+/// 预装 dsh-market 插件到 web profile，让插件市场出现在 dsh 自带设置里。
+/// 需要 node runtime 的 pnpm 可用（dsh plugin 命令内部调用 pnpm）。
+pub fn preinstall_market(paths: &Paths, registry: &str) -> Result<(), String> {
+    let node_exe = crate::runtime::node_bin(paths);
+    let entry = kernel_bin(paths);
+    if !node_exe.exists() || !entry.exists() {
+        return Ok(()); // 未就绪则跳过
+    }
+    let dsh_home = paths.root.join("dsh-home");
+    let mut cmd = std::process::Command::new(&node_exe);
+    cmd.arg(&entry)
+        .args(["plugin", "--profile", "web", "add", "dshmarket"])
+        .arg(format!("--registry={registry}"))
+        .env("DSH_HOME", &dsh_home)
+        // dsh plugin 内部调用 pnpm，需把 node bin 放进 PATH
+        .env(
+            "PATH",
+            prepend_dir(node_exe.parent().unwrap_or(std::path::Path::new("."))),
+        )
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .status()
+        .map_err(|e| format!("无法启动 dsh plugin 预装市场: {e}"))?;
+    Ok(())
+}
+
+fn prepend_dir(dir: &std::path::Path) -> std::ffi::OsString {
+    let mut paths = vec![dir.to_path_buf()];
+    if let Ok(existing) = std::env::var("PATH") {
+        for p in std::env::split_paths(&existing) {
+            paths.push(p);
+        }
+    }
+    std::env::join_paths(paths).unwrap_or_default()
+}
+
 /// semver 比较（兼容 rc 预发布：prerelease 版本 < 正式版）
 pub fn compare_versions(a: &str, b: &str) -> i32 {
     let parse = |v: &str| -> (Vec<u64>, bool, String) {

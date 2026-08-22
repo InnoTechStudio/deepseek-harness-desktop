@@ -40,5 +40,6 @@ semver = "1"
 dirs = "6"
 # 流式进度
 bytes = "1"
+tauri-plugin-dialog = "2.7.2"
 
 [dev-dependencies]

@@ -12,13 +12,6 @@ type KernelState = {
   platform: string;
 };
 
-type UpdateInfo = {
-  installed: string | null;
-  latest: string | null;
-  updateAvailable: boolean;
-  registry: string;
-};
-
 type DownloadProgress = {
   kind: string;
   received: number;
@@ -33,17 +26,13 @@ const STEPS = [
 ];
 
 function App() {
-  const [state, setState] = useState<KernelState | null>(null);
+  const [, setState] = useState<KernelState | null>(null);
   const [booting, setBooting] = useState(true);
-  const [initBusy, setInitBusy] = useState(false);
   const [step, setStep] = useState(0);
   const [progress, setProgress] = useState<DownloadProgress | null>(null);
   const [logLines, setLogLines] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [dshUrl, setDshUrl] = useState<string | null>(null);
-  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
-  const [showSettings, setShowSettings] = useState(false);
-  const [updating, setUpdating] = useState(false);
 
   const refreshState = async () => {
     try {
@@ -72,25 +61,10 @@ function App() {
         setLogLines((prev) => [...prev.slice(-80), e.payload]);
       }),
     );
-    unsubs.push(
-      listen("menu-check-update", () => {
-        setShowSettings(true);
-        checkUpdate();
-      }),
-    );
     return () => {
       unsubs.forEach((p) => p.then((u) => u()));
     };
   }, []);
-
-  const checkUpdate = async () => {
-    try {
-      const u = await invoke<UpdateInfo>("check_update");
-      setUpdateInfo(u);
-    } catch (e) {
-      setError(String(e));
-    }
-  };
 
   useEffect(() => {
     // 自动初始化：node → kernel → launch
@@ -102,7 +76,6 @@ function App() {
         return;
       }
       setBooting(true);
-      setInitBusy(true);
       try {
         if (!s.nodeReady) {
           setStep(0);
@@ -120,87 +93,16 @@ function App() {
       } catch (e) {
         setError(String(e));
         setBooting(false);
-      } finally {
-        setInitBusy(false);
       }
     };
     run();
   }, []);
 
-  const doUpdate = async () => {
-    setUpdating(true);
-    setError(null);
-    try {
-      await invoke<string>("apply_update");
-      setUpdateInfo(null);
-      await refreshState();
-      const port = await invoke<number>("start_dsh");
-      setDshUrl(`http://127.0.0.1:${port}/`);
-    } catch (e) {
-      setError(String(e));
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  const doRollback = async () => {
-    setError(null);
-    try {
-      await invoke("rollback");
-      await refreshState();
-      const port = await invoke<number>("start_dsh");
-      setDshUrl(`http://127.0.0.1:${port}/`);
-    } catch (e) {
-      setError(String(e));
-    }
-  };
-
-  const doSkip = async () => {
-    if (updateInfo?.latest) {
-      await invoke("skip_version", { version: updateInfo.latest });
-      setUpdateInfo(null);
-    }
-  };
-
-  // 主界面：直接内嵌 dsh Web UI
+  // 主界面：纯全屏内嵌 dsh Web UI（无外部状态栏/设置面板，设置走 dsh 自带）
   if (!booting && dshUrl) {
     return (
       <div className="main-view">
         <iframe src={dshUrl} title="DeepSeek Harness" className="main-iframe" />
-        <div className="statusbar">
-          <span>内核 v{state?.installedVersion ?? "?"}</span>
-          <span className="status-actions">
-            <button onClick={() => setDshUrl(`${dshUrl}settings/`)}>插件市场</button>
-            <button onClick={() => setShowSettings((v) => !v)}>设置</button>
-          </span>
-        </div>
-        {showSettings && (
-          <div className="settings-panel">
-            <h3>设置</h3>
-            <div className="row">
-              <button onClick={checkUpdate} disabled={updating}>
-                检查更新
-              </button>
-              {updateInfo?.updateAvailable && (
-                <>
-                  <span>
-                    发现新版 v{updateInfo.latest}（当前 v{updateInfo.installed}）
-                  </span>
-                  <button onClick={doUpdate} disabled={updating}>
-                    立即更新
-                  </button>
-                  <button onClick={doSkip}>跳过此版本</button>
-                </>
-              )}
-            </div>
-            <div className="row">
-              <button onClick={doRollback}>回退到上一版本</button>
-              <button onClick={() => invoke("open_data_dir")}>打开数据目录</button>
-            </div>
-            {error && <div className="error">{error}</div>}
-            <div className="log">{logLines.join("\n")}</div>
-          </div>
-        )}
       </div>
     );
   }
@@ -211,7 +113,7 @@ function App() {
       <div className="boot-card">
         <h1>DSH Desk</h1>
         <p className="subtitle">DeepSeek Harness 桌面客户端</p>
-        {booting || initBusy ? (
+        {booting ? (
           <>
             <ol className="steps">
               {STEPS.map((s, i) => (
@@ -223,8 +125,10 @@ function App() {
             </ol>
             {progress && progress.percent != null && (
               <div className="progress">
-                <div className="bar" style={{ width: `${progress.percent}%` }} />
-                <span>{progress.percent.toFixed(0)}%</span>
+                <div className="progress-track">
+                  <div className="bar" style={{ width: `${progress.percent}%` }} />
+                </div>
+                <span className="pct">{progress.percent.toFixed(0)}%</span>
               </div>
             )}
             {progress && progress.percent == null && <div className="hint">正在准备…</div>}

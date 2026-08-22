@@ -94,6 +94,10 @@ pub async fn install_kernel(
     log_to_file(paths, "install_kernel: pnpm ok, swapping");
     kernel::swap_staging_to_overlay(paths)?;
     kernel::confirm_healthy_cleanup(paths);
+    // 预装 dsh-market 插件到 web profile，让插件市场融入 dsh 自带设置
+    if let Err(e) = kernel::preinstall_market(paths, &registry) {
+        log_to_file(paths, &format!("install_kernel: preinstall market warning: {e}"));
+    }
     log_to_file(paths, "install_kernel: done");
     emit(&app, "log", format!("内核 v{version} 安装完成"));
     Ok(version)
@@ -201,7 +205,11 @@ pub async fn apply_update(
     app: AppHandle,
     state: State<'_, Arc<AppState>>,
 ) -> Result<String, String> {
-    let _paths = state.paths();
+    apply_update_impl(&app, &state).await
+}
+
+/// 供托盘/后台更新调用的实现
+pub async fn apply_update_impl(app: &AppHandle, state: &Arc<AppState>) -> Result<String, String> {
     {
         let mut u = state.updating.lock().await;
         if *u {
@@ -209,7 +217,7 @@ pub async fn apply_update(
         }
         *u = true;
     }
-    let res = do_apply_update(&app, &state).await;
+    let res = do_apply_update(app, state).await;
     *state.updating.lock().await = false;
     res
 }
@@ -237,6 +245,16 @@ async fn do_apply_update(app: &AppHandle, state: &AppState) -> Result<String, St
     Ok(version)
 }
 
+/// 供托盘/后台调用：重启 dsh 服务（升级后重新拉起）
+pub async fn restart_dsh_impl(app: &AppHandle, state: &Arc<AppState>) -> Result<u16, String> {
+    let paths = state.paths();
+    let mut child = crate::dsh::spawn_dsh(paths, "web")?;
+    let port = wait_for_port(&mut child, state.as_ref()).await?;
+    *state.dsh.lock().await = Some(DshRuntime { child, port });
+    emit(app, "log", format!("dsh 服务已重启，端口 {}", port));
+    Ok(port)
+}
+
 /// 跳过某版本
 #[tauri::command]
 pub async fn skip_version(
@@ -253,6 +271,11 @@ pub async fn skip_version(
 /// 回退到上一版本
 #[tauri::command]
 pub async fn rollback(state: State<'_, Arc<AppState>>) -> Result<(), String> {
+    rollback_impl(&state).await
+}
+
+/// 供托盘菜单调用的回退实现（无 tauri State 包装）
+pub async fn rollback_impl(state: &Arc<AppState>) -> Result<(), String> {
     kernel::rollback(state.paths())
 }
 
@@ -274,10 +297,15 @@ pub async fn speed_probe(state: State<'_, Arc<AppState>>) -> Result<Vec<mirrors:
 /// 打开数据目录（调试用）
 #[tauri::command]
 pub async fn open_data_dir(_app: AppHandle) -> Result<(), String> {
+    open_data_dir_impl();
+    Ok(())
+}
+
+/// 供托盘菜单调用的打开数据目录
+pub fn open_data_dir_impl() {
     let paths = crate::paths::Paths::resolve();
     let _ = std::fs::create_dir_all(&paths.root);
     open_path(&paths.root);
-    Ok(())
 }
 
 #[cfg(target_os = "macos")]

@@ -98,13 +98,33 @@
   margin-bottom: 14px;
 }
 
-.bar {
+.progress-track {
+  flex: 1;
   height: 8px;
+  border-radius: 4px;
+  background: #e5e7eb;
+  overflow: hidden;
+}
+
+@media (prefers-color-scheme: dark) {
+  .progress-track {
+    background: #333842;
+  }
+}
+
+.bar {
+  height: 100%;
   border-radius: 4px;
   background: #4d6bfe;
   transition: width 0.2s;
-  flex: 1;
-  max-width: 100%;
+}
+
+.pct {
+  min-width: 44px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: #6b7280;
+  font-size: 13px;
 }
 
 .hint {
