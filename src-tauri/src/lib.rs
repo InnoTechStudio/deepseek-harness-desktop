@@ -13,7 +13,7 @@ use state::AppState;
 use std::sync::Arc;
 use tauri::{
     menu::{Menu, MenuItem, PredefinedMenuItem},
-    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+    tray::{MouseButton, TrayIconBuilder, TrayIconEvent},
     Manager, WindowEvent,
 };
 
@@ -24,15 +24,23 @@ pub fn run() {
     let app_state = Arc::new(AppState::new());
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+            // 二次启动：恢复窗口到前台
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.unminimize();
+                let _ = window.set_focus();
+            }
+        }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(app_state)
+        // 应用菜单（Dock/顶部菜单栏）：标准 macOS 菜单栏应用放动作的地方
+        .menu(|app| build_app_menu(app))
         .setup(|app| {
-            // 创建主窗口（在 tauri.conf 里定义，这里确保可见 + 单实例）
             setup_window(app.handle());
             setup_tray(app.handle())?;
-            // 启动后台内核更新检查（每 6h 一次；发现新版弹原生对话框）
             spawn_update_checker(app.handle().clone());
             Ok(())
         })
@@ -59,28 +67,85 @@ pub fn run() {
                 }
             }
         })
+        // 应用菜单（macOS 顶部/Dock，Windows 主菜单）事件
+        .on_menu_event(|app, event| handle_menu_event(app, event))
         .build(tauri::generate_context!())
         .expect("error while running tauri application")
-        .run(|app_handle, event| {
-            // 托盘左键点击恢复窗口（RunEvent 层）
-            if let tauri::RunEvent::TrayIconEvent(
-                TrayIconEvent::Click {
-                    button: MouseButton::Left,
-                    button_state: MouseButtonState::Up,
-                    ..
-                },
-            ) = event
-            {
-                restore_window(app_handle);
+        .run(|_app_handle, _event| {});
+}
+
+/// 统一的菜单/托盘动作处理（app 菜单 + 托盘菜单共用同一组 id）
+fn handle_menu_event(
+    app: &tauri::AppHandle,
+    event: tauri::menu::MenuEvent,
+) {
+    match event.id().as_ref() {
+        "show" => restore_window(app),
+        "check-update" => check_and_notify(app),
+        "rollback" => {
+            if let Some(state) = app.try_state::<Arc<AppState>>() {
+                tauri::async_runtime::block_on(async {
+                    let _ = crate::commands::rollback_impl(&state).await;
+                });
             }
-        });
+        }
+        "data" => crate::commands::open_data_dir_impl(),
+        "quit" => quit_app(app),
+        _ => {}
+    }
+}
+
+/// 追加一行到数据目录 logs/app.log
+fn log_line(msg: &str) {
+    use std::io::Write;
+    let paths = crate::paths::Paths::resolve();
+    if let Ok(mut f) = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(paths.log_dir.join("tray.log"))
+    {
+        let _ = writeln!(f, "[{}] {}", std::process::id(), msg);
+    }
+}
+
+/// 应用菜单（macOS 顶部/Dock，Windows 主菜单）
+fn build_app_menu(app: &tauri::AppHandle) -> tauri::Result<tauri::menu::Menu<tauri::Wry>> {
+    let show = tauri::menu::MenuItem::with_id(app, "show", "打开 DSH Desk", true, None::<&str>)?;
+    let check = tauri::menu::MenuItem::with_id(app, "check-update", "检查内核更新", true, None::<&str>)?;
+    let rollback = tauri::menu::MenuItem::with_id(app, "rollback", "回退到上一版本", true, None::<&str>)?;
+    let data = tauri::menu::MenuItem::with_id(app, "data", "打开数据目录", true, None::<&str>)?;
+    let quit = tauri::menu::MenuItem::with_id(app, "quit", "退出 DSH Desk", true, None::<&str>)?;
+    let sep = tauri::menu::PredefinedMenuItem::separator(app)?;
+    tauri::menu::Menu::with_items(app, &[&show, &check, &rollback, &data, &sep, &quit])
 }
 
 fn restore_window(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
+        log_line("restore: show()");
         let _ = window.show();
         let _ = window.unminimize();
         let _ = window.set_focus();
+        // macOS：托盘点击时 app 未激活，需把应用激活 + 把窗口带到最前
+        #[cfg(target_os = "macos")]
+        {
+            window_activate(&window);
+        }
+        log_line(&format!(
+            "restore: visible={} focused={}",
+            window.is_visible().unwrap_or(false),
+            window.is_focused().unwrap_or(false)
+        ));
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn window_activate(_w: &tauri::WebviewWindow) {
+    use objc2::MainThreadMarker;
+    use objc2_app_kit::NSApplication;
+    let mtm = MainThreadMarker::new().expect("must be on main thread");
+    let app = NSApplication::sharedApplication(mtm);
+    unsafe {
+        app.activateIgnoringOtherApps(true);
     }
 }
 
@@ -198,30 +263,21 @@ fn setup_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
         .icon(icon)
         .tooltip(APP_NAME)
         .menu(&menu)
+        // 标准 macOS 菜单栏应用交互：
+        //   左键单击 → 触发 TrayIconEvent::Click → 恢复/隐藏窗口
+        //   右键单击 → 弹出菜单（打开/检查更新/回退/数据/退出）
+        // macOS 上若左键也弹菜单，Click 事件会被系统吞掉导致无法恢复窗口。
         .show_menu_on_left_click(false)
-        .on_menu_event(|app, event| match event.id().as_ref() {
-            "show" => restore_window(app),
-            "check-update" => check_and_notify(app),
-            "rollback" => {
-                if let Some(state) = app.try_state::<Arc<AppState>>() {
-                    tauri::async_runtime::block_on(async {
-                        let _ = crate::commands::rollback_impl(&state).await;
-                    });
-                }
-            }
-            "data" => {
-                crate::commands::open_data_dir_impl();
-            }
-            "quit" => quit_app(app),
-            _ => {}
-        })
+        .on_menu_event(|app, event| handle_menu_event(app, event))
         .on_tray_icon_event(|tray, event| {
+            log_line(&format!("tray-icon-event: {event:?}"));
+            // 左键单击托盘 → 恢复窗口（macOS/Windows/Linux 一致）
             if let TrayIconEvent::Click {
                 button: MouseButton::Left,
-                button_state: MouseButtonState::Up,
                 ..
             } = event
             {
+                log_line("left-click restore");
                 restore_window(tray.app_handle());
             }
         })
