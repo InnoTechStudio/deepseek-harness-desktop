@@ -37,11 +37,12 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(app_state)
         // 应用菜单（Dock/顶部菜单栏）：标准 macOS 菜单栏应用放动作的地方
-        .menu(|app| build_app_menu(app))
+        .menu(build_app_menu)
         .setup(|app| {
             setup_window(app.handle());
             setup_tray(app.handle())?;
             spawn_update_checker(app.handle().clone());
+            spawn_watchdog(app.handle().clone());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -68,7 +69,7 @@ pub fn run() {
             }
         })
         // 应用菜单（macOS 顶部/Dock，Windows 主菜单）事件
-        .on_menu_event(|app, event| handle_menu_event(app, event))
+        .on_menu_event(handle_menu_event)
         .build(tauri::generate_context!())
         .expect("error while running tauri application")
         .run(|_app_handle, _event| {});
@@ -90,9 +91,22 @@ fn handle_menu_event(
             }
         }
         "data" => crate::commands::open_data_dir_impl(),
+        "about" => show_about(app),
         "quit" => quit_app(app),
         _ => {}
     }
+}
+
+/// 关于对话框
+fn show_about(app: &tauri::AppHandle) {
+    use tauri_plugin_dialog::DialogExt;
+    let _ = app
+        .dialog()
+        .message(
+            "DSH Desk\n\nDeepSeek Harness 桌面客户端\n\n版本 0.1.0\n\n轻量、免装环境、安装即用、自动跟随官方升级。",
+        )
+        .title("关于 DSH Desk")
+        .blocking_show();
 }
 
 /// 追加一行到数据目录 logs/app.log
@@ -114,9 +128,10 @@ fn build_app_menu(app: &tauri::AppHandle) -> tauri::Result<tauri::menu::Menu<tau
     let check = tauri::menu::MenuItem::with_id(app, "check-update", "检查内核更新", true, None::<&str>)?;
     let rollback = tauri::menu::MenuItem::with_id(app, "rollback", "回退到上一版本", true, None::<&str>)?;
     let data = tauri::menu::MenuItem::with_id(app, "data", "打开数据目录", true, None::<&str>)?;
+    let about = tauri::menu::MenuItem::with_id(app, "about", "关于 DSH Desk", true, None::<&str>)?;
     let quit = tauri::menu::MenuItem::with_id(app, "quit", "退出 DSH Desk", true, None::<&str>)?;
     let sep = tauri::menu::PredefinedMenuItem::separator(app)?;
-    tauri::menu::Menu::with_items(app, &[&show, &check, &rollback, &data, &sep, &quit])
+    tauri::menu::Menu::with_items(app, &[&show, &check, &rollback, &data, &about, &sep, &quit])
 }
 
 fn restore_window(app: &tauri::AppHandle) {
@@ -157,6 +172,35 @@ fn spawn_update_checker(app: tauri::AppHandle) {
             std::thread::sleep(std::time::Duration::from_secs(20));
             check_and_notify(&app);
             std::thread::sleep(std::time::Duration::from_secs(6 * 3600));
+        }
+    });
+}
+
+/// 看门狗：dsh 服务若意外退出，自动重启（保证常驻稳定）。
+fn spawn_watchdog(app: tauri::AppHandle) {
+    std::thread::spawn(move || {
+        loop {
+            std::thread::sleep(std::time::Duration::from_secs(10));
+            let Some(state) = app
+                .try_state::<Arc<AppState>>()
+                .map(|s| s.inner().clone())
+            else {
+                continue;
+            };
+            let state2 = state.clone();
+            let app2 = app.clone();
+            tauri::async_runtime::spawn(async move {
+                let mut g = state2.dsh.lock().await;
+                let Some(d) = g.as_mut() else { return };
+                // 子进程已退出 → 重启
+                if let Ok(Some(_)) = d.child.try_wait() {
+                    let _ = d.child.wait();
+                    drop(g);
+                    if let Ok(port) = crate::commands::restart_dsh_impl(&app2, &state2).await {
+                        log_line(&format!("watchdog: dsh 已重启，端口 {port}"));
+                    }
+                }
+            });
         }
     });
 }
@@ -268,7 +312,7 @@ fn setup_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
         //   右键单击 → 弹出菜单（打开/检查更新/回退/数据/退出）
         // macOS 上若左键也弹菜单，Click 事件会被系统吞掉导致无法恢复窗口。
         .show_menu_on_left_click(false)
-        .on_menu_event(|app, event| handle_menu_event(app, event))
+        .on_menu_event(handle_menu_event)
         .on_tray_icon_event(|tray, event| {
             log_line(&format!("tray-icon-event: {event:?}"));
             // 左键单击托盘 → 恢复窗口（macOS/Windows/Linux 一致）
