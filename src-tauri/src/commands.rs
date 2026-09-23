@@ -5,7 +5,6 @@ use crate::runtime;
 use crate::state::{AppState, DshRuntime};
 use std::sync::Arc;
 use std::path::PathBuf;
-use futures::StreamExt;
 use tauri::{AppHandle, Emitter, Manager, State};
 
 pub type DynProgress = Option<Arc<dyn Fn(runtime::DownloadProgress) + Send + Sync>>;
@@ -1126,7 +1125,6 @@ pub async fn submit_feedback(
         ),
     ];
 
-    let logs = if include_logs { collect_logs(paths) } else { Vec::new() };
     let title = feedback_title(&description);
     // 日志不进 URL：带完整日志的正文会超过 GitHub 的 URL 长度限制，
     // 而少量诊断信息（系统/版本）已足够复现。这里显式传空日志段，
@@ -1137,8 +1135,6 @@ pub async fn submit_feedback(
     } else {
         ""
     };
-    let title = feedback_title(&description);
-    let body = feedback_body(&description, &environment, &[]); // 日志不进 URL
     let url = build_issue_url(&title, &body, logs_hint);
     log_to_file(paths, &format!("submit_feedback: 打开浏览器 {url_len}", url_len = url.len()));
     open_url_in_browser(&app, &url)
@@ -1351,8 +1347,7 @@ pub async fn download_client_update(
     let download_dir = app
         .path()
         .download_dir()
-        .or_else(|_| dirs::download_dir())
-        .unwrap_or_else(|_| paths.root.join("downloads"));
+        .unwrap_or_else(|_| dirs::download_dir().unwrap_or_else(|| paths.root.join("downloads")));
     std::fs::create_dir_all(&download_dir).map_err(|e| format!("创建下载目录失败: {e}"))?;
 
     let file_name = download_url
@@ -1385,7 +1380,7 @@ pub async fn download_client_update(
         &file_path,
         Some(emitted_progress),
         "client-update",
-        &log,
+        log,
         Some(&expected_sha),
     )
     .await?;
