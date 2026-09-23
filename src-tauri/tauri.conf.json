@@ -1,7 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "DSH Desk",
-  "version": "0.1.0",
+  "productName": "DeepSeek Harness",
+  "mainBinaryName": "DeepSeek Harness",
+  "version": "1.0.7",
   "identifier": "com.dshdesk.app",
   "build": {
     "beforeDevCommand": "pnpm dev",
@@ -12,13 +13,16 @@
   "app": {
     "windows": [
       {
-        "title": "DSH Desk",
+        "title": "",
         "label": "main",
         "width": 1200,
         "height": 800,
         "minWidth": 900,
         "minHeight": 600,
-        "visible": false
+        "visible": false,
+        "decorations": true,
+        "transparent": false,
+        "dragDropEnabled": false
       }
     ],
     "security": {
@@ -34,6 +38,9 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "resources": [
+      "resources/dsh-desktop-shell/**/*"
+    ],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -42,11 +49,24 @@
       "icons/icon.ico"
     ],
     "macOS": {
-      "minimumSystemVersion": "10.15"
+      "minimumSystemVersion": "10.15",
+      "signingIdentity": "-",
+      "entitlements": "./entitlements.plist"
     },
     "windows": {
       "nsis": {
-        "installMode": "currentUser"
+        "installMode": "currentUser",
+        "installerHooks": "./installer/hooks.nsi",
+        "headerImage": "./installer/header.bmp",
+        "sidebarImage": "./installer/sidebar.bmp",
+        "uninstallerHeaderImage": "./installer/header.bmp",
+        "installerIcon": "./icons/icon.ico",
+        "uninstallerIcon": "./icons/icon.ico",
+        "languages": [
+          "SimpChinese",
+          "English"
+        ],
+        "displayLanguageSelector": false
       }
     }
   }

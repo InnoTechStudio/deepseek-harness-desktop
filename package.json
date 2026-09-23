@@ -1,12 +1,17 @@
 {
   "name": "dshdesk",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.7",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "sync:shell": "node scripts/sync-shell-resources.mjs",
     "preview": "vite preview",
+    "build:artifacts": "node scripts/build-artifacts.mjs",
+    "make:dmg": "node scripts/make-dmg.mjs",
+    "build:macos": "pnpm sync:shell && pnpm tauri build --bundles app && node scripts/make-dmg.mjs && node scripts/build-artifacts.mjs macos",
+    "build:windows": "pnpm sync:shell && pnpm tauri build --bundles nsis && node scripts/build-artifacts.mjs windows",
     "tauri": "tauri"
   },
   "dependencies": {

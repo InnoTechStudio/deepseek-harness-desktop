@@ -4,30 +4,57 @@ on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      version:
+        description: "要发布的版本号（如 1.0.7）。tag 为空时按 package.json 里的版本取"
+        required: false
+        default: ""
 
 jobs:
   build:
+    name: ${{ matrix.name }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - platform: macos-latest
-            args: ""
+            name: macOS (aarch64)
+            artifact_name: dshdesk-macos-aarch64
+            bundle: dmg
+            archive: macos
+            rust_target: aarch64-apple-darwin
+            artifact_arch: aarch64
           - platform: windows-latest
-            args: ""
+            name: Windows (x64)
+            artifact_name: dshdesk-windows-x64
+            bundle: nsis
+            archive: windows
+            rust_target: x86_64-pc-windows-msvc
+            artifact_arch: x64
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust (Linux/macOS)
-        if: runner.os != 'Windows'
-        uses: dtolnay/rust-toolchain@stable
+      - name: Resolve version
+        id: ver
+        shell: bash
+        run: |
+          # 由 tag 或手动输入取版本号，两处留一。
+          if [ "${{ github.event_name }}" = "push" ]; then
+            VER="${GITHUB_REF_NAME#v}"
+          else
+            VER="${{ inputs.version }}"
+            if [ -z "$VER" ]; then
+              VER=$(node -p "require('./package.json').version")
+            fi
+          fi
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
+          echo "Resolved version: $VER"
 
-      - name: Install Rust (Windows)
-        if: runner.os == 'Windows'
+      - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: x86_64-pc-windows-msvc
+          targets: ${{ matrix.rust_target }}
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
@@ -42,20 +69,118 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 11
+
+      - name: Build desktop shell plugin
+        run: |
+          cd dsh-desktop-shell
+          pnpm install --frozen-lockfile
+          pnpm build
 
       - name: Install frontend deps
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
-      - name: Build
-        run: pnpm tauri build
+      - name: Sync shell resources into src-tauri
+        run: node scripts/sync-shell-resources.mjs
 
-      - name: Upload artifacts
+      - name: Build bundle
+        run: pnpm tauri build --bundles ${{ matrix.bundle }} --target ${{ matrix.rust_target }}
+
+      - name: Archive build artifact
+        env:
+          TAURI_BUILD_TARGET: ${{ matrix.rust_target }}
+          DSH_ARTIFACT_ARCH: ${{ matrix.artifact_arch }}
+        run: node scripts/build-artifacts.mjs ${{ matrix.archive }}
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: dshdesk-${{ matrix.platform }}
-          path: |
-            src-tauri/target/release/bundle/dmg/*.dmg
-            src-tauri/target/release/bundle/nsis/*.exe
-            src-tauri/target/release/bundle/nsis/*.exe.sig
-          if-no-files-found: ignore
+          name: ${{ matrix.artifact_name }}
+          path: APP/${{ matrix.archive }}
+          if-no-files-found: error
+
+      - name: Extract release notes
+        if: matrix.platform == 'macos-latest'
+        shell: bash
+        run: |
+          VER="${{ steps.ver.outputs.version }}"
+          awk "/^## ${VER}（|^## ${VER} /{flag=1;next} /^## /{flag=0} flag" APP/CHANGELOG.md > RELEASE_NOTES.md || true
+          if [ ! -s RELEASE_NOTES.md ]; then
+            echo "本次发布以双端自动编译产物为准，更新说明见 CHANGELOG.md。" > RELEASE_NOTES.md
+          fi
+          echo "Extracted notes:" && cat RELEASE_NOTES.md
+
+      - name: Upload release notes
+        if: matrix.platform == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: RELEASE_NOTES.md
+
+  release:
+    name: Publish release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: ver
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            VER="${GITHUB_REF_NAME#v}"
+          else
+            VER="${{ inputs.version }}"
+            if [ -z "$VER" ]; then
+              VER=$(node -p "require('./package.json').version")
+            fi
+          fi
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
+          echo "Resolved version: $VER"
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Collect assets
+        shell: bash
+        run: |
+          mkdir -p release-assets
+          cp artifacts/dshdesk-macos-aarch64/*.dmg release-assets/ 2>/dev/null || true
+          cp artifacts/dshdesk-windows-x64/*.exe release-assets/ 2>/dev/null || true
+          ls -la release-assets/
+
+      - name: Generate update.json
+        shell: bash
+        run: |
+          node scripts/make-update-manifest.mjs \
+            --version="${{ steps.ver.outputs.version }}" \
+            --macos-dir=release-assets \
+            --windows-dir=release-assets \
+            --changelog=APP/CHANGELOG.md \
+            --out=update.json
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: DeepSeek Harness ${{ steps.ver.outputs.version }}
+          body_path: artifacts/release-notes/RELEASE_NOTES.md
+          files: |
+            release-assets/*.dmg
+            release-assets/*.exe
+            update.json
+          fail_on_unmatched_files: false
+
+      - name: Commit update.json back to main
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add update.json
+          git diff --cached --quiet || git commit -m "chore(release): update.json for ${{ steps.ver.outputs.version }}"
+          git push

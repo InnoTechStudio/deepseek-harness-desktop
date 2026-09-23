@@ -1,0 +1,6 @@
+产物目录由构建脚本自动生成：
+
+- `macOS/`：macOS DMG 和 manifest
+- `Windows/`：Windows NSIS 安装包和 manifest
+
+实际二进制不提交到 Git；每次构建会覆盖对应平台目录，另一平台目录不会受影响。

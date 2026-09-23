@@ -1,0 +1,12 @@
+[build]
+# 使用 cross 进行 Windows 交叉编译的配置
+
+[target.x86_64-pc-windows-gnu]
+# 使用 GNU 工具链（MinGW）而非 MSVC
+# cross 对 GNU 目标的支持更成熟
+image = "ghcr.io/cross-rs/x86_64-pc-windows-gnu:latest"
+
+[build.env]
+passthrough = [
+    "RUSTFLAGS",
+]

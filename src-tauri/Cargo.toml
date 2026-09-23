@@ -1,6 +1,6 @@
 [package]
 name = "dshdesk"
-version = "0.1.0"
+version = "1.0.7"
 description = "DSH Desk - DeepSeek Harness 桌面客户端"
 authors = ["dshdesk"]
 edition = "2021"
@@ -18,7 +18,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = ["tray-icon", "image-png"] }
+tauri = { version = "2", features = ["tray-icon", "image-png", "devtools"] }
 tauri-plugin-opener = "2"
 tauri-plugin-updater = "2"
 serde = { version = "1", features = ["derive"] }
@@ -42,9 +42,42 @@ dirs = "6"
 bytes = "1"
 tauri-plugin-dialog = "2.7.2"
 tauri-plugin-single-instance = "2.4.3"
+tauri-plugin-notification = "2"
+window-vibrancy = "0.6"
+# 本地反向代理：把内核代理到一个我们自己持有的 http 端口。
+# 见 src/proxy.rs 顶部注释——iframe 需要真正的 http origin，
+# 自定义协议下内核建 WebSocket 会失败。
+hyper = { version = "1", features = ["server", "http1"] }
+hyper-util = { version = "0.1", features = ["tokio"] }
+http-body-util = "0.1"
 
 [target.'cfg(target_os = "macos")'.dependencies]
+block2 = "0.6"
 objc2 = "0.6"
 objc2-app-kit = "0.3"
+objc2-foundation = "0.3"
+# UNUserNotificationCenter 是现在唯一能让通知归属到真实 .app 身份
+# （显示本应用名称和图标）的接口。notify_rust 走的 NSUserNotification 是
+# 老接口，只能靠 NSBundle hook 伪造身份，署名和图标都不受控。
+objc2-user-notifications = { version = "0.3", features = [
+    "UNUserNotificationCenter",
+    "UNNotificationContent",
+    "UNNotificationRequest",
+    "UNNotificationTrigger",
+    "UNNotificationSettings",
+    "UNError",
+    "block2",
+] }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+raw-window-handle = "0.6"
+# 版本必须跟 tauri 传出来的 controller 接口一致，否则 cast 的是另一套 COM 定义。
+webview2-com = "0.38"
+windows = { version = "0.61", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Dwm",
+    "Win32_UI_WindowsAndMessaging",
+]
+}
 
 [dev-dependencies]

@@ -1,6 +1,6 @@
 //! Node runtime：下载（动态选源）→ 校验 → 解压 → 确认 node 可用
-use crate::downloader::download_with_progress;
-use crate::mirrors::{choose_registry, node_mirrors};
+use crate::downloader::download_with_diagnostics;
+use crate::mirrors::node_mirrors;
 use crate::paths::Paths;
 use sha2::{Digest, Sha256};
 use std::path::{Path, PathBuf};
@@ -34,12 +34,31 @@ pub fn node_ready(paths: &Paths) -> bool {
         return false;
     }
     // 简单探测：node --version 快速返回
-    let out = std::process::Command::new(&bin)
+    let mut cmd = std::process::Command::new(&bin);
+    let out = crate::dsh::suppress_console(&mut cmd)
         .arg("--version")
         .stdout(std::process::Stdio::null())
         .stderr(std::process::Stdio::null())
         .status();
     matches!(out, Ok(s) if s.success())
+}
+
+/// 缺失或损坏时自动重装 Node，而不是把错误甩给用户。
+///
+/// 换安装路径重装、数据目录探测失败、上次解压中断，都会让 `node_ready` 为假。
+/// 引导、装内核、升级、启动服务都走这里，避免再出现「找不到 Node.js」硬失败。
+pub async fn ensure_node_runtime(
+    client: &reqwest::Client,
+    paths: &Paths,
+    cached_registry: Option<String>,
+    on_progress: Option<Arc<dyn Fn(DownloadProgress) + Send + Sync>>,
+) -> Result<(), String> {
+    if node_ready(paths) {
+        return Ok(());
+    }
+    crate::commands::log_to_file(paths, "ensure_node: 运行时缺失或不可用，正在重新安装");
+    install_node_runtime(client, paths, cached_registry, on_progress).await?;
+    Ok(())
 }
 
 fn sha256_hex(path: &Path) -> Result<String, String> {
@@ -67,20 +86,98 @@ pub async fn install_node_runtime(
 ) -> Result<String, String> {
     let platform = paths.platform();
     let arch = node_arch();
-    let mirrors = node_mirrors(NODE_VERSION, platform, arch);
-    let base = choose_registry(client, "node", cached_registry, mirrors)
-        .await
-        .ok_or_else(|| "无法确定 Node 下载源".to_string())?;
-
-    // base 已经是完整文件 URL
-    let url = base;
     let tmp = paths.root.join(format!("node-{}.dl", NODE_VERSION));
-    // 断点续传：旧下载文件若已完整则跳过（避免每次都重传 48MB）
-    if tmp.exists() && verify_checksum(client, &url, &tmp).await.is_ok() {
-        // 已完整 → 直接解压
-    } else {
-        download_with_progress(client, &url, &tmp, on_progress.clone(), "node").await?;
-        verify_checksum(client, &url, &tmp).await?;
+    let log = {
+        let paths = paths.clone();
+        Some(Arc::new(move |line: String| {
+            crate::commands::log_to_file(&paths, &line);
+        }) as Arc<dyn Fn(String) + Send + Sync>)
+    };
+
+    // 已有完整下载则直接解压，跳过选源与下载（避免每次都重传 48MB）。
+    let cached_url = cached_registry.filter(|url| url.ends_with(&node_file_name(platform, arch)));
+    if tmp.exists() {
+        if let Some(url) = &cached_url {
+            if verify_checksum(client, url, &tmp).await.is_ok() {
+                return finish_install(paths, url, &tmp, &on_progress).await;
+            }
+        }
+    }
+
+    // 竞速：并发试下所有镜像的开头 2 MB，最快的胜出并保留已下载数据续传。
+    let candidates: Vec<String> = node_mirrors(NODE_VERSION, platform, arch)
+        .into_iter()
+        .map(|m| m.base_url)
+        .collect();
+    let scratch_dir = paths.root.join("race");
+    let outcome = crate::downloader::race_sources(client, &candidates, &scratch_dir, &log)
+        .await
+        .ok_or_else(|| "所有下载源都不可用，请检查网络后重试".to_string())?;
+    let url = outcome.url.clone();
+    if let Some(cb) = &log {
+        cb(format!(
+            "node: 选中 {}（{} KB/s），已预热 {} KB",
+            url.split('/').nth(2).unwrap_or("?"),
+            outcome.bytes_per_sec.map(|b| b / 1024).unwrap_or(0),
+            outcome.warm_bytes / 1024
+        ));
+    }
+
+    // 把竞速阶段已下载的数据挪到目标位置，正式下载从这里续传。
+    let winner_part = scratch_dir.join("race-winner.part");
+    let _ = tokio::fs::remove_file(&tmp).await;
+    if outcome.warm_bytes > 0 && winner_part.exists() {
+        if tokio::fs::rename(&winner_part, &tmp).await.is_err() {
+            let _ = tokio::fs::remove_file(&winner_part).await;
+        }
+    }
+    let _ = tokio::fs::remove_dir_all(&scratch_dir).await;
+
+    download_with_diagnostics(client, &url, &tmp, on_progress.clone(), "node", log.clone()).await?;
+    // 校验属于"解压/安装"阶段的前半段，单独上报，避免下载 100% 后界面静止。
+    if let Some(cb) = &on_progress {
+        cb(DownloadProgress {
+            kind: "node-install".to_string(),
+            received: 0,
+            total: Some(100),
+            percent: Some(0.0),
+        });
+    }
+    if let Err(error) = verify_checksum(client, &url, &tmp).await {
+        // 校验失败通常是续传数据与远端不一致，清掉重下一次再报错。
+        let _ = tokio::fs::remove_file(&tmp).await;
+        download_with_diagnostics(client, &url, &tmp, on_progress.clone(), "node", log.clone())
+            .await?;
+        verify_checksum(client, &url, &tmp)
+            .await
+            .map_err(|second| format!("{error}；重试后仍失败：{second}"))?;
+    }
+
+    finish_install(paths, &url, &tmp, &on_progress).await
+}
+
+/// Node 压缩包文件名，用于判断缓存的 URL 是否还指向当前版本。
+fn node_file_name(platform: &str, arch: &str) -> String {
+    let node_os = if platform == "win32" { "win" } else { platform };
+    let ext = if platform == "win32" { "zip" } else { "tar.gz" };
+    format!("node-{NODE_VERSION}-{node_os}-{arch}.{ext}")
+}
+
+/// 解压并确认 node 可用。
+async fn finish_install(
+    paths: &Paths,
+    url: &str,
+    tmp: &Path,
+    on_progress: &Option<Arc<dyn Fn(DownloadProgress) + Send + Sync>>,
+) -> Result<String, String> {
+    // 校验通过，进入解压阶段。
+    if let Some(cb) = &on_progress {
+        cb(DownloadProgress {
+            kind: "node-install".to_string(),
+            received: 30,
+            total: Some(100),
+            percent: Some(30.0),
+        });
     }
 
     // 解压到 node_dir（先清空再解）
@@ -90,11 +187,19 @@ pub async fn install_node_runtime(
     std::fs::create_dir_all(&paths.node_dir).map_err(|e| e.to_string())?;
 
     if url.ends_with(".zip") {
-        extract_zip(&tmp, &paths.node_dir)?;
+        extract_zip(tmp, &paths.node_dir)?;
     } else {
-        extract_tar_gz(&tmp, &paths.node_dir)?;
+        extract_tar_gz(tmp, &paths.node_dir)?;
     }
-    let _ = std::fs::remove_file(&tmp);
+    if let Some(cb) = &on_progress {
+        cb(DownloadProgress {
+            kind: "node-install".to_string(),
+            received: 100,
+            total: Some(100),
+            percent: Some(100.0),
+        });
+    }
+    let _ = std::fs::remove_file(tmp);
 
     // 确认 node 可用
     if !node_ready(paths) {
@@ -212,10 +317,8 @@ fn extract_zip(src: &Path, dest: &Path) -> Result<(), String> {
 }
 
 /// 给 bin/ 下的可执行文件加权限
+#[cfg(unix)]
 fn set_exec(node_dir: &Path) {
-    if cfg!(target_os = "windows") {
-        return;
-    }
     use std::os::unix::fs::PermissionsExt;
     if let Ok(entries) = std::fs::read_dir(node_dir.join("bin")) {
         for e in entries.flatten() {
@@ -228,3 +331,6 @@ fn set_exec(node_dir: &Path) {
         }
     }
 }
+
+#[cfg(not(unix))]
+fn set_exec(_node_dir: &Path) {}

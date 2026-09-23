@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  语音输入需要的授权。Info.plist 里的用途说明只是让系统"可以弹窗询问"，
+  真正允许进程访问麦克风和苹果语音识别服务的是这里的 entitlements。
+
+  两者缺一不可：少了用途说明，系统直接拒绝且不弹窗；少了 entitlements，
+  即使弹窗点了同意也拿不到音频。
+-->
+<plist version="1.0">
+<dict>
+	<key>com.apple.security.device.audio-input</key>
+	<true/>
+	<key>com.apple.security.personal-information.speech-recognition</key>
+	<true/>
+</dict>
+</plist>

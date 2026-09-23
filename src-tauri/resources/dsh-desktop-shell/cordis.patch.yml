@@ -1,0 +1,6 @@
+# Tauri-compatible advanced desktop shell
+- id: ui-layout
+  disabled: true
+- insert:
+    - id: dsh-desktop-shell
+      name: dsh-desktop-shell

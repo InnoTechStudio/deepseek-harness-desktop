@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  与 Tauri 生成的 Info.plist 合并，只补充它不会自动生成的键。
+  不要在这里写版本号、包标识这类 Tauri 已经管理的字段，会互相冲突。
+
+  麦克风用途说明是 macOS 的硬性要求：没有这一项，系统会直接拒绝麦克风访问，
+  连授权弹窗都不出现，表现为语音输入按钮点了完全没反应。
+  语音输入来自 dsh-file-upload 插件，走浏览器 Web Speech API。
+-->
+<plist version="1.0">
+<dict>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>需要使用麦克风，才能在对话输入框里进行语音输入。</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>需要使用语音识别，才能把你的录音转写成文字填入输入框。</string>
+</dict>
+</plist>
