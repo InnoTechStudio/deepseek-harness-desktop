@@ -72,16 +72,18 @@ jobs:
           version: 11
 
       - name: Build desktop shell plugin
+        working-directory: dsh-desktop-shell
         run: |
-          cd dsh-desktop-shell
           pnpm install --frozen-lockfile
           pnpm build
 
-      - name: Install frontend deps
-        run: pnpm install --frozen-lockfile
-
       - name: Sync shell resources into src-tauri
         run: node scripts/sync-shell-resources.mjs
+
+      - name: Install frontend deps and build Tauri app
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
 
       - name: Build bundle
         run: pnpm tauri build --bundles ${{ matrix.bundle }} --target ${{ matrix.rust_target }}
