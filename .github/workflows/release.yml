@@ -51,6 +51,19 @@ jobs:
           echo "version=$VER" >> "$GITHUB_OUTPUT"
           echo "Resolved version: $VER"
 
+      - name: Extract release notes
+        if: matrix.platform == 'macos-latest'
+        shell: bash
+        run: |
+          VER="${{ steps.ver.outputs.version }}"
+          # 必须排在打包前面：build-artifacts 会先清空 APP/，而 APP/CHANGELOG.md
+          # 就在那个目录里。提取完存成文件，随 artifact 带去发布任务。
+          awk "/^## ${VER}（|^## ${VER} /{flag=1;next} /^## /{flag=0} flag" APP/CHANGELOG.md > RELEASE_NOTES.md || true
+          if [ ! -s RELEASE_NOTES.md ]; then
+            echo "本次发布以双端自动编译产物为准，更新说明见 CHANGELOG.md。" > RELEASE_NOTES.md
+          fi
+          echo "Extracted notes:" && cat RELEASE_NOTES.md
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -100,17 +113,6 @@ jobs:
           name: ${{ matrix.artifact_name }}
           path: APP/${{ matrix.archive }}
           if-no-files-found: error
-
-      - name: Extract release notes
-        if: matrix.platform == 'macos-latest'
-        shell: bash
-        run: |
-          VER="${{ steps.ver.outputs.version }}"
-          awk "/^## ${VER}（|^## ${VER} /{flag=1;next} /^## /{flag=0} flag" APP/CHANGELOG.md > RELEASE_NOTES.md || true
-          if [ ! -s RELEASE_NOTES.md ]; then
-            echo "本次发布以双端自动编译产物为准，更新说明见 CHANGELOG.md。" > RELEASE_NOTES.md
-          fi
-          echo "Extracted notes:" && cat RELEASE_NOTES.md
 
       - name: Upload release notes
         if: matrix.platform == 'macos-latest'
