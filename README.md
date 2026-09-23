@@ -1,18 +1,18 @@
 # DeepSeek Harness 桌面客户端
 
-**AI API 中转站推荐：[r8api.com](https://r8api.com/)** —— 国内直连不稳时的稳定中转，OpenAI / Anthropic / Google 都能用。
+**双击安装，打开即用。** 不用装 Node，不用配镜像源，不用碰终端。
 
-**双击安装，打开即用。** 不用装 Node，不用配镜像源，不用碰终端。客户端启动时自动准备运行环境、下载官方内核、打开一个干净的桌面窗口。
+自动从多个镜像里挑最快的下载，支持断点续传。打开即用，关闭后服务继续后台运行。
 
-macOS 与 Windows 双端原生体验，跟随系统深浅色主题，托盘常驻，关闭窗口不退出服务。
+macOS 与 Windows 双端原生体验，跟随系统深浅色，托盘常驻。
 
 ---
 
 ## 截图
 
-| 主界面 | 设置 | 托盘 |
+| 主界面（macOS） | 设置（Windows） | 托盘（Windows） |
 |---|---|---|
-| ![主界面](docs/screenshots/windows-main.png) | ![设置](docs/screenshots/settings.png) | ![托盘](docs/screenshots/tray.png) |
+| ![主界面](docs/screenshots/mac-main.png) | ![设置](docs/screenshots/settings.png) | ![托盘](docs/screenshots/tray.png) |
 
 ---
 
@@ -24,8 +24,6 @@ macOS 与 Windows 双端原生体验，跟随系统深浅色主题，托盘常�
 |---|---|---|
 | macOS | `DeepSeek-Harness-x.x.x-aarch64.dmg` | macOS 10.15+，Apple 芯片 |
 | Windows | `DeepSeek-Harness-x.x.x-x64-setup.exe` | Windows 10 / 11（64 位） |
-
-国内直连不稳时，客户端自动从多个镜像里挑最快的下载，不用手动配置。
 
 ---
 
@@ -57,7 +55,9 @@ macOS 与 Windows 双端原生体验，跟随系统深浅色主题，托盘常�
 
 ### 3. 配置 API
 
-在主界面填入 API 密钥。国内访问不稳时，可用 [r8api.com](https://r8api.com/) 的中转地址作为 Base URL。
+在主界面填入 API 密钥。
+
+**推荐使用 [r8api.com](https://r8api.com/)**：一个 API 中转站，支持 DeepSeek / OpenAI / Anthropic / Google。一个 Key 走天下，不用在各家分别注册充值，也不用为不同模型维护多套配置。
 
 ### 4. 日常使用
 
@@ -106,6 +106,10 @@ pnpm tauri build    # 打包
 ## 许可
 
 MIT License © 2026 INNOTECH
+
+## 贡献者
+
+[InnoTechStudio](https://github.com/InnoTechStudio)
 
 ---
 
