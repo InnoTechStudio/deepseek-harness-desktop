@@ -1,0 +1,3 @@
+minimumReleaseAgeExclude:
+  - '@deepseek-ai/cordis@4.0.4'
+  - '@deepseek-ai/cosmokit@1.8.5'
