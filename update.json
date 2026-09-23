@@ -1,0 +1,19 @@
+{
+  "version": "1.0.7",
+  "notes": "",
+  "publishedAt": "2026-09-23",
+  "files": {
+    "macos": {
+      "name": "DeepSeek-Harness-1.0.7-aarch64.dmg",
+      "size": 8835903,
+      "sha256": "3b342e43597e065a6e11a56f75a22c1f7f6063a4158883192cf946f105ab2785",
+      "url": "https://github.com/InnoTechStudio/deepseek-harness-desktop/releases/download/v1.0.7/DeepSeek-Harness-1.0.7-aarch64.dmg"
+    },
+    "windows": {
+      "name": "DeepSeek-Harness-1.0.7-x64-setup.exe",
+      "size": 5201308,
+      "sha256": "d6ad39bff26bc9b246b51f22af33fa3ab3df57e6401665a33a3cc2048fca404f",
+      "url": "https://github.com/InnoTechStudio/deepseek-harness-desktop/releases/download/v1.0.7/DeepSeek-Harness-1.0.7-x64-setup.exe"
+    }
+  }
+}
