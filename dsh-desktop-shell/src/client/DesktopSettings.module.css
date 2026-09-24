@@ -106,6 +106,9 @@
   border-color: var(--dsw-alias-brand-primary);
 }
 
+/* 开启态的品牌色在暗色模式下是很浅的灰白，旋钮如果还用纯白就几乎融进轨道。
+   所以旋钮颜色跟暗色模式同步切换：浅色下用纯白、暗色下换成深灰，
+   保持「轨道浅 ↔ 旋钮深」的对比关系，两种主题里都能清楚看到旋钮位置。 */
 .switchKnob {
   position: absolute;
   top: 2px;
@@ -115,7 +118,12 @@
   border-radius: 99px;
   background: #fff;
   box-shadow: 0 1px 2px rgba(0, 0, 0, .25);
-  transition: left .15s ease;
+  transition: left .15s ease, background .15s ease;
+}
+
+body[data-ds-dark-theme] .switchKnob {
+  background: var(--dsw-static-neutral-bluish-850);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .35);
 }
 
 .switchOn .switchKnob {

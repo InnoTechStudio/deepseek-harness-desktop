@@ -1,6 +1,6 @@
 [package]
 name = "dshdesk"
-version = "1.0.7"
+version = "1.0.8"
 description = "DSH Desk - DeepSeek Harness 桌面客户端"
 authors = ["dshdesk"]
 edition = "2021"

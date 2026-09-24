@@ -887,7 +887,7 @@ dependencies = [
 
 [[package]]
 name = "dshdesk"
-version = "1.0.6"
+version = "1.0.8"
 dependencies = [
  "block2",
  "bytes",

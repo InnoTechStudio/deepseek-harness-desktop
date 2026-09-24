@@ -558,7 +558,7 @@ window.__ModuleLoader__.load({
 		}
 		//#endregion
 		//#region \0dsh-css:/Users/llh928737095/Documents/AI-Agent/Projects/DeepSeek-Harness-Desktop/dsh-desktop-shell/src/client/./DesktopSettings.module.css.mjs
-		const css = ".HapLFW_root{flex-direction:column;gap:12px;max-width:720px;display:flex;container-type:inline-size}.HapLFW_title{color:var(--dsw-alias-label-primary);margin:0;font-size:16px;font-weight:500;line-height:24px}.HapLFW_intro{color:var(--dsw-alias-label-tertiary);margin:0;font-size:13px;line-height:1.5}.HapLFW_group{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-3);border-radius:12px;flex-direction:column;padding:2px 16px;display:flex}.HapLFW_row+.HapLFW_row{border-top:1px solid var(--dsw-alias-border-l2)}.HapLFW_row{align-items:center;gap:12px;padding:12px 0;display:flex}.HapLFW_rowText{flex-direction:column;flex:1;gap:4px;min-width:0;display:flex}.HapLFW_label{color:var(--dsw-alias-label-primary);align-items:center;gap:6px;font-size:13px;line-height:20px;display:flex}.HapLFW_hint{color:var(--dsw-alias-label-tertiary);font-size:12px;line-height:1.5}.HapLFW_help{color:var(--dsw-alias-label-tertiary);cursor:help;background:0 0;border:0;align-items:center;padding:0;display:inline-flex}.HapLFW_help:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:2px;border-radius:99px}.HapLFW_switch{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-2);cursor:pointer;border-radius:99px;flex-shrink:0;width:38px;height:22px;padding:0;transition:background .15s,border-color .15s;position:relative}.HapLFW_switchOn{background:var(--dsw-alias-brand-primary);border-color:var(--dsw-alias-brand-primary)}.HapLFW_switchKnob{background:#fff;border-radius:99px;width:16px;height:16px;transition:left .15s;position:absolute;top:2px;left:2px;box-shadow:0 1px 2px #00000040}.HapLFW_switchOn .HapLFW_switchKnob{left:18px}.HapLFW_switch:disabled{opacity:.5;cursor:default}.HapLFW_switch:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:2px}.HapLFW_status{grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;display:grid}@container (width<=420px){.HapLFW_status{grid-template-columns:1fr}}.HapLFW_statusItem{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-3);border-radius:10px;flex-direction:column;gap:4px;padding:12px 14px;display:flex}.HapLFW_statusLabel{color:var(--dsw-alias-label-tertiary);font-size:12px;line-height:1.5}.HapLFW_statusValue{color:var(--dsw-alias-label-primary);align-items:center;gap:6px;font-size:13px;line-height:20px;display:flex}.HapLFW_error{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-state-error-primary);border-radius:8px;align-items:center;gap:8px;padding:10px 12px;font-size:12px;line-height:1.5;display:flex}.HapLFW_errorAction{color:inherit;font:inherit;cursor:pointer;background:0 0;border:1px solid;border-radius:6px;flex-shrink:0;margin-left:auto;padding:4px 10px;font-size:12px;line-height:18px}.HapLFW_errorAction:hover{background:var(--dsw-alias-bg-layer-3)}.HapLFW_errorAction:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:2px}.HapLFW_loading{color:var(--dsw-alias-label-tertiary);font-size:13px;line-height:20px}.HapLFW_actions{justify-content:center;gap:8px;display:flex}.HapLFW_linkButton{border:1px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-primary);font:inherit;cursor:pointer;background:0 0;border-radius:8px;padding:6px 14px;font-size:13px;line-height:20px;transition:background .15s}.HapLFW_linkButton:hover:not(:disabled){background:var(--dsw-alias-bg-layer-2)}.HapLFW_linkButton:disabled{opacity:.5;cursor:default}.HapLFW_about{color:var(--dsw-alias-label-tertiary);text-align:center;margin:0;font-size:12px;line-height:1.5}";
+		const css = ".HapLFW_root{flex-direction:column;gap:12px;max-width:720px;display:flex;container-type:inline-size}.HapLFW_title{color:var(--dsw-alias-label-primary);margin:0;font-size:16px;font-weight:500;line-height:24px}.HapLFW_intro{color:var(--dsw-alias-label-tertiary);margin:0;font-size:13px;line-height:1.5}.HapLFW_group{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-3);border-radius:12px;flex-direction:column;padding:2px 16px;display:flex}.HapLFW_row+.HapLFW_row{border-top:1px solid var(--dsw-alias-border-l2)}.HapLFW_row{align-items:center;gap:12px;padding:12px 0;display:flex}.HapLFW_rowText{flex-direction:column;flex:1;gap:4px;min-width:0;display:flex}.HapLFW_label{color:var(--dsw-alias-label-primary);align-items:center;gap:6px;font-size:13px;line-height:20px;display:flex}.HapLFW_hint{color:var(--dsw-alias-label-tertiary);font-size:12px;line-height:1.5}.HapLFW_help{color:var(--dsw-alias-label-tertiary);cursor:help;background:0 0;border:0;align-items:center;padding:0;display:inline-flex}.HapLFW_help:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:2px;border-radius:99px}.HapLFW_switch{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-2);cursor:pointer;border-radius:99px;flex-shrink:0;width:38px;height:22px;padding:0;transition:background .15s,border-color .15s;position:relative}.HapLFW_switchOn{background:var(--dsw-alias-brand-primary);border-color:var(--dsw-alias-brand-primary)}.HapLFW_switchKnob{background:#fff;border-radius:99px;width:16px;height:16px;transition:left .15s,background .15s;position:absolute;top:2px;left:2px;box-shadow:0 1px 2px #00000040}body[data-ds-dark-theme] .HapLFW_switchKnob{background:var(--dsw-static-neutral-bluish-850);box-shadow:0 1px 2px #00000059}.HapLFW_switchOn .HapLFW_switchKnob{left:18px}.HapLFW_switch:disabled{opacity:.5;cursor:default}.HapLFW_switch:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:2px}.HapLFW_status{grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;display:grid}@container (width<=420px){.HapLFW_status{grid-template-columns:1fr}}.HapLFW_statusItem{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-3);border-radius:10px;flex-direction:column;gap:4px;padding:12px 14px;display:flex}.HapLFW_statusLabel{color:var(--dsw-alias-label-tertiary);font-size:12px;line-height:1.5}.HapLFW_statusValue{color:var(--dsw-alias-label-primary);align-items:center;gap:6px;font-size:13px;line-height:20px;display:flex}.HapLFW_error{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-state-error-primary);border-radius:8px;align-items:center;gap:8px;padding:10px 12px;font-size:12px;line-height:1.5;display:flex}.HapLFW_errorAction{color:inherit;font:inherit;cursor:pointer;background:0 0;border:1px solid;border-radius:6px;flex-shrink:0;margin-left:auto;padding:4px 10px;font-size:12px;line-height:18px}.HapLFW_errorAction:hover{background:var(--dsw-alias-bg-layer-3)}.HapLFW_errorAction:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:2px}.HapLFW_loading{color:var(--dsw-alias-label-tertiary);font-size:13px;line-height:20px}.HapLFW_actions{justify-content:center;gap:8px;display:flex}.HapLFW_linkButton{border:1px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-primary);font:inherit;cursor:pointer;background:0 0;border-radius:8px;padding:6px 14px;font-size:13px;line-height:20px;transition:background .15s}.HapLFW_linkButton:hover:not(:disabled){background:var(--dsw-alias-bg-layer-2)}.HapLFW_linkButton:disabled{opacity:.5;cursor:default}.HapLFW_about{color:var(--dsw-alias-label-tertiary);text-align:center;margin:0;font-size:12px;line-height:1.5}";
 		const tagId = "dsh-desktop-shell/DesktopSettings.module.css";
 		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId) + "]") === null) {
 			const tag = document.createElement("style");
@@ -568,28 +568,28 @@ window.__ModuleLoader__.load({
 			document.head.appendChild(tag);
 		}
 		var DesktopSettings_module_css_default = {
-			"statusLabel": "HapLFW_statusLabel",
-			"statusValue": "HapLFW_statusValue",
-			"group": "HapLFW_group",
-			"about": "HapLFW_about",
-			"error": "HapLFW_error",
-			"root": "HapLFW_root",
-			"help": "HapLFW_help",
-			"statusItem": "HapLFW_statusItem",
 			"linkButton": "HapLFW_linkButton",
-			"hint": "HapLFW_hint",
-			"errorAction": "HapLFW_errorAction",
-			"label": "HapLFW_label",
-			"title": "HapLFW_title",
-			"loading": "HapLFW_loading",
-			"actions": "HapLFW_actions",
-			"status": "HapLFW_status",
+			"help": "HapLFW_help",
+			"statusLabel": "HapLFW_statusLabel",
+			"group": "HapLFW_group",
 			"switch": "HapLFW_switch",
-			"switchKnob": "HapLFW_switchKnob",
-			"intro": "HapLFW_intro",
-			"row": "HapLFW_row",
+			"actions": "HapLFW_actions",
+			"loading": "HapLFW_loading",
+			"hint": "HapLFW_hint",
+			"error": "HapLFW_error",
+			"status": "HapLFW_status",
+			"root": "HapLFW_root",
+			"about": "HapLFW_about",
+			"statusItem": "HapLFW_statusItem",
+			"errorAction": "HapLFW_errorAction",
 			"switchOn": "HapLFW_switchOn",
-			"rowText": "HapLFW_rowText"
+			"row": "HapLFW_row",
+			"switchKnob": "HapLFW_switchKnob",
+			"label": "HapLFW_label",
+			"rowText": "HapLFW_rowText",
+			"intro": "HapLFW_intro",
+			"statusValue": "HapLFW_statusValue",
+			"title": "HapLFW_title"
 		};
 		//#endregion
 		//#region src/client/DesktopSettings.tsx
