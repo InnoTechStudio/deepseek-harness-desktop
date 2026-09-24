@@ -370,8 +370,8 @@ footer a:hover{color:var(--primary)}
   const plat = isWin ? "win" : "mac";
   const shot = document.getElementById("shot");
   shot.src = shotMap[plat];
-  // 按截图比例微调容器最大宽度
-  const shotRatio = plat === "win" ? (1470 / 923) : (2624 / 1824);
+  // 按截图原始比例微调容器宽度（裁掉白边后的实际比例）
+  const shotRatio = plat === "win" ? (1770 / 1204) : (2340 / 1540);
   const heroRight = document.querySelector(".shot-wrap");
   const syncWidth = () => {
     const heroH = heroRight.clientHeight;
