@@ -1,19 +1,19 @@
 {
-  "version": "1.0.7",
-  "notes": "",
-  "publishedAt": "2026-09-23",
+  "version": "1.0.8",
+  "notes": "深色细节微调。\n\n**修复**\n- 深色调下，「客户端设置」里打开的开关旋钮与轨道颜色太接近、看不清，现在深色调会换用深色旋钮，一眼能看清开关状态",
+  "publishedAt": "2026-09-24",
   "files": {
     "macos": {
-      "name": "DeepSeek-Harness-1.0.7-aarch64.dmg",
-      "size": 8835907,
-      "sha256": "9315686b4462299b2397e30db7b30b37fc0aab83a3882e813ae330b2eb8728fd",
-      "url": "https://github.com/InnoTechStudio/deepseek-harness-desktop/releases/download/v1.0.7/DeepSeek-Harness-1.0.7-aarch64.dmg"
+      "name": "DeepSeek-Harness-1.0.8-aarch64.dmg",
+      "size": 8836077,
+      "sha256": "f8eb9d2fe8b47e6f3eadd8ff4c3d6392a3ac686bfe639077dfb4f3703d91713d",
+      "url": "https://github.com/InnoTechStudio/deepseek-harness-desktop/releases/download/v1.0.8/DeepSeek-Harness-1.0.8-aarch64.dmg"
     },
     "windows": {
-      "name": "DeepSeek-Harness-1.0.7-x64-setup.exe",
-      "size": 5201258,
-      "sha256": "1c2d31d02eaceb7106f88bd0ced929c46f2a7fb42ebe3da095bdc93b94a215fa",
-      "url": "https://github.com/InnoTechStudio/deepseek-harness-desktop/releases/download/v1.0.7/DeepSeek-Harness-1.0.7-x64-setup.exe"
+      "name": "DeepSeek-Harness-1.0.8-x64-setup.exe",
+      "size": 5207030,
+      "sha256": "e6e61aeb123368c14f371d7485b98ec3f6b443263601bcdcc0bc41b50ce14c7b",
+      "url": "https://github.com/InnoTechStudio/deepseek-harness-desktop/releases/download/v1.0.8/DeepSeek-Harness-1.0.8-x64-setup.exe"
     }
   }
 }
