@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DeepSeek 桌面端 · 官方下载</title>
 <meta name="description" content="DeepSeek Harness 桌面客户端官方下载 — macOS 与 Windows 双端原生体验，实时同步 GitHub 最新版本。">
-<link rel="icon" href="assets/logo.png?v=2">
-<link rel="apple-touch-icon" href="assets/logo.png?v=2">
+<link rel="icon" type="image/png" sizes="512x512" href="favicon.png?v=3">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=3">
 <style>
 :root{
   --bg:#f5f9ff;
@@ -370,8 +370,8 @@ footer a:hover{color:var(--primary)}
   const plat = isWin ? "win" : "mac";
   const shot = document.getElementById("shot");
   shot.src = shotMap[plat];
-  // 按截图原始比例微调容器宽度（裁掉白边后的实际比例）
-  const shotRatio = plat === "win" ? (1770 / 1204) : (2340 / 1540);
+  // 按截图原始比例微调容器宽度（保持原始比例不裁切）
+  const shotRatio = plat === "win" ? (1822 / 1256) : (2400 / 1600);
   const heroRight = document.querySelector(".shot-wrap");
   const syncWidth = () => {
     const heroH = heroRight.clientHeight;
@@ -424,43 +424,67 @@ footer a:hover{color:var(--primary)}
     return null;
   }
 
-  const apiUrl = (location.hostname === "localhost" || location.hostname === "127.0.0.1")
-    ? API : API + "?_ts=" + Date.now();
-  fetch(apiUrl, { headers: { "Accept": "application/vnd.github+json" }, cache: "no-store" })
-    .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
-    .then(rel => {
-      const tag = rel.tag_name || "";
-      const mac = pickAsset(rel.assets || [], ["aarch64.*\\.dmg$", "\\.dmg$"]);
-      const win = pickAsset(rel.assets || [], ["x64.*setup.*\\.exe$", "setup.*\\.exe$", "\\.exe$"]);
 
-      if (mac){
-        document.getElementById("btn-mac").href = mac.browser_download_url;
-        document.getElementById("ver-mac").textContent = tag + " · " + fmtSize(mac.size);
-        if (plat === "mac") document.getElementById("btn-mac").classList.add("primary");
-      }
-      if (win){
-        document.getElementById("btn-win").href = win.browser_download_url;
-        document.getElementById("ver-win").textContent = tag + " · " + fmtSize(win.size);
-        if (plat === "win") document.getElementById("btn-win").classList.add("primary");
-      }
-      // 若平台未识别，mac 默认 primary
-      if (!mac && !win) {
-        document.getElementById("btn-mac").classList.add("primary");
-      }
+  function loadReleaseWithRetry(attempt) {
+    if (!attempt) attempt = 1;
+    const bust = "_ts=" + Date.now() + "&r=" + attempt;
+    const url = API + "?" + bust;
+    fetch(url, { headers: { "Accept": "application/vnd.github+json" }, cache: "no-store" })
+      .then(r => {
+        if (r.status === 403 || r.status === 429) {
+          if (attempt < 3) {
+            setTimeout(() => loadReleaseWithRetry(attempt + 1), 2500 * attempt);
+            return { __pending_retry__ : true };
+          }
+          throw new Error("HTTP " + r.status);
+        }
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(data => {
+        if (data.__pending_retry__) return;
+        renderRelease(data);
+      })
+      .catch(err => {
+        if (attempt < 3 && /403|429/.test(err.message)) {
+          setTimeout(() => loadReleaseWithRetry(attempt + 1), 2500 * attempt);
+          return;
+        }
+        renderError(err);
+      });
+  }
 
-      document.getElementById("version-pill").textContent = "当前最新版 " + tag;
-      document.getElementById("release-chip").innerHTML =
-        '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13.5 4.5L6 12 2.5 8.5"/></svg>' +
-        "实时同步 GitHub Releases · <a href=\"" + (rel.html_url || "#") + "\" target=\"_blank\" rel=\"noopener\">查看 " + tag + " 更新说明</a>";
-    })
-    .catch(err => {
-      console.warn("release fetch failed:", err);
-      document.getElementById("version-pill").textContent = "版本读取失败，仍可前往 GitHub 下载";
-      document.getElementById("release-chip").innerHTML =
-        '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v3M8 11h.01"/></svg>' +
-        "暂时无法读取最新版本，请前往 <a href=\"https://github.com/" + REPO + "/releases\" target=\"_blank\" rel=\"noopener\">GitHub Releases</a>";
-      document.getElementById("btn-mac").classList.add("primary");
-    });
+  function renderRelease(rel) {
+    const tag = rel.tag_name || "";
+    const mac = pickAsset(rel.assets || [], ["aarch64.*\\.dmg$", "\\.dmg$"]);
+    const win = pickAsset(rel.assets || [], ["x64.*setup.*\\.exe$", "setup.*\\.exe$", "\\.exe$"]);
+    if (mac){
+      document.getElementById("btn-mac").href = mac.browser_download_url;
+      document.getElementById("ver-mac").textContent = tag + " · " + fmtSize(mac.size);
+      if (plat === "mac") document.getElementById("btn-mac").classList.add("primary");
+    }
+    if (win){
+      document.getElementById("btn-win").href = win.browser_download_url;
+      document.getElementById("ver-win").textContent = tag + " · " + fmtSize(win.size);
+      if (plat === "win") document.getElementById("btn-win").classList.add("primary");
+    }
+    if (!mac && !win) document.getElementById("btn-mac").classList.add("primary");
+    document.getElementById("version-pill").textContent = "当前最新版 " + tag;
+    document.getElementById("release-chip").innerHTML =
+      '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13.5 4.5L6 12 2.5 8.5"/></svg>' +
+      "实时同步 GitHub Releases · <a href=\"" + (rel.html_url || "#") + "\" target=\"_blank\" rel=\"noopener\">查看 " + tag + " 更新说明</a>";
+  }
+
+  function renderError(err) {
+    console.warn("release fetch failed:", err);
+    document.getElementById("version-pill").textContent = "版本读取失败，仍可前往 GitHub 下载";
+    document.getElementById("release-chip").innerHTML =
+      '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v3M8 11h.01"/></svg>' +
+      "暂时无法读取最新版本，请前往 <a href=\"https://github.com/" + REPO + "/releases\" target=\"_blank\" rel=\"noopener\">GitHub Releases</a>";
+    document.getElementById("btn-mac").classList.add("primary");
+  }
+
+  loadReleaseWithRetry(1);
 })();
 </script>
 </body>
