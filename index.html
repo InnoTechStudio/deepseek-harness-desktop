@@ -8,166 +8,293 @@
 <link rel="icon" href="assets/logo.png">
 <style>
 :root{
-  --bg:#0a0e1a;
-  --panel:#11173180;
-  --border:#ffffff14;
-  --text:#eef2ff;
-  --muted:#8b93b0;
-  --accent:#5b8cff;
-  --accent2:#7ab3ff;
+  --bg:#f5f9ff;
+  --bg2:#eef4ff;
+  --text:#0e1c3f;
+  --text2:#3a4a6b;
+  --muted:#7c89a8;
+  --primary:#2f6bff;
+  --primary-h:#1f56e8;
+  --primary-soft:#e3ecff;
+  --primary-glow:#2f6bff26;
+  --card:#ffffff;
+  --border:#dde5f5;
+  --border-strong:#c8d6f0;
+  --shadow-sm:0 1px 3px rgba(15,30,70,.05), 0 2px 8px rgba(15,30,70,.05);
+  --shadow-md:0 4px 16px rgba(15,30,70,.07), 0 12px 32px rgba(15,30,70,.07);
+  --shadow-lg:0 8px 32px rgba(15,30,70,.10), 0 24px 64px rgba(15,30,70,.12);
+  --radius:20px;
+  --radius-sm:14px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
 body{
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Helvetica Neue","Microsoft Yahei",sans-serif;
   background:var(--bg);
   color:var(--text);
   min-height:100vh;
   overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
 }
-/* 背景光晕 */
-body::before{
-  content:"";position:fixed;inset:0;z-index:-1;
+/* ─── 背景 ─── */
+.bg{
+  position:fixed;inset:0;z-index:-2;pointer-events:none;
   background:
-    radial-gradient(900px 600px at 15% -10%, #1c2c63 0%, transparent 60%),
-    radial-gradient(800px 600px at 90% 0%, #14204a 0%, transparent 55%),
-    radial-gradient(1000px 700px at 50% 120%, #0c1638 0%, transparent 60%),
-    var(--bg);
+    radial-gradient(1200px 700px at 85% -10%, #cfe0ff 0%, transparent 55%),
+    radial-gradient(900px 600px at -10% 30%, #e0ebff 0%, transparent 60%),
+    radial-gradient(1400px 800px at 50% 110%, #d9e6ff 0%, transparent 60%),
+    linear-gradient(180deg, #f8fbff 0%, #eef4ff 60%, #e8f0ff 100%);
 }
-.wrap{max-width:1180px;margin:0 auto;padding:0 28px}
-/* 顶部 */
+.bg-grid{
+  position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.35;
+  background-image:
+    linear-gradient(to right, #2f6bff08 1px, transparent 1px),
+    linear-gradient(to bottom, #2f6bff08 1px, transparent 1px);
+  background-size:48px 48px;
+  mask-image:radial-gradient(ellipse 80% 60% at 50% 20%, #000 0%, transparent 70%);
+  -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 20%, #000 0%, transparent 70%);
+}
+/* ─── 容器 ─── */
+.wrap{max-width:1200px;margin:0 auto;padding:0 32px}
+/* ─── 顶部 ─── */
 header{
   display:flex;align-items:center;justify-content:space-between;
-  padding:26px 0;
+  padding:28px 0;
+  animation:fadeDown .6s cubic-bezier(.2,.7,.3,1) both;
 }
-.brand{display:flex;align-items:center;gap:12px}
-.brand img{width:30px;height:30px;border-radius:7px}
-.brand-name{font-size:16px;font-weight:600;letter-spacing:.2px}
-.brand-name small{font-size:11px;color:var(--muted);display:block;font-weight:400;margin-top:1px}
+.brand{display:flex;align-items:center;gap:14px}
+.brand-logo{
+  width:40px;height:40px;border-radius:11px;flex:none;
+  box-shadow:0 4px 12px #2f6bff33, inset 0 1px 0 #ffffff40;
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.brand:hover .brand-logo{transform:rotate(-6deg) scale(1.05)}
+.brand-name{font-size:17px;font-weight:600;letter-spacing:-.2px;line-height:1.2}
+.brand-name small{display:block;font-size:11.5px;color:var(--muted);font-weight:400;margin-top:2px;letter-spacing:.1px}
 .gh-link{
   display:inline-flex;align-items:center;gap:8px;
-  padding:8px 14px;border-radius:8px;
-  border:1px solid var(--border);
-  background:var(--panel);
-  color:var(--text);text-decoration:none;font-size:13px;
-  transition:.2s;
+  padding:9px 16px;border-radius:11px;
+  border:1px solid var(--border);background:var(--card);
+  color:var(--text2);text-decoration:none;font-size:13.5px;font-weight:500;
+  box-shadow:var(--shadow-sm);
+  transition:.22s cubic-bezier(.2,.7,.3,1);
 }
-.gh-link:hover{background:#ffffff0a;border-color:#ffffff2a}
-.gh-link svg{width:16px;height:16px;fill:currentColor}
-/* Hero */
+.gh-link:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);border-color:var(--border-strong);color:var(--text)}
+.gh-link svg{width:16px;height:16px;fill:currentColor;opacity:.7}
+/* ─── Hero ─── */
 .hero{
-  display:grid;grid-template-columns:1fr;gap:38px;
-  padding:44px 0 60px;
-  align-items:center;
+  padding:32px 0 64px;
+  display:grid;grid-template-columns:1fr;gap:48px;
 }
-@media(min-width:960px){
-  .hero{grid-template-columns:5fr 7fr;padding:56px 0 72px}
+@media(min-width:980px){
+  .hero{grid-template-columns:5fr 7fr;padding:56px 0 80px;gap:64px}
 }
+/* 左侧文字区 */
+.copy{animation:fadeUp .7s cubic-bezier(.2,.7,.3,1) .05s both}
 .kicker{
   display:inline-flex;align-items:center;gap:8px;
-  font-size:12px;color:var(--muted);
-  padding:5px 12px;border-radius:999px;
-  border:1px solid var(--border);background:var(--panel);
-  margin-bottom:22px;
+  font-size:12.5px;font-weight:500;color:var(--primary);
+  padding:6px 14px;border-radius:999px;
+  background:var(--primary-soft);
+  border:1px solid #c8d8ff;
+  margin-bottom:24px;
 }
-.kicker .dot{width:6px;height:6px;border-radius:50%;background:#3dd68f;box-shadow:0 0 8px #3dd68f}
-h1{font-size:clamp(36px,5vw,56px);line-height:1.06;font-weight:700;letter-spacing:-1.2px}
+.kicker .dot{
+  width:7px;height:7px;border-radius:50%;background:#22c55e;position:relative;flex:none;
+  box-shadow:0 0 0 0 #22c55e55;
+  animation:pulse 2.4s ease-out infinite;
+}
+h1{
+  font-size:clamp(38px,5.2vw,58px);line-height:1.08;font-weight:700;
+  letter-spacing:-1.8px;color:var(--text);
+}
 h1 .grad{
-  background:linear-gradient(90deg,#9ab6ff, #5b8cff 60%, #4576e8);
+  background:linear-gradient(115deg, #2f6bff 0%, #5b8eff 45%, #7fb0ff 100%);
   -webkit-background-clip:text;background-clip:text;color:transparent;
 }
 .sub{
-  margin-top:14px;font-size:16px;color:var(--muted);line-height:1.7;max-width:34em;
+  margin-top:18px;font-size:16px;color:var(--muted);line-height:1.8;max-width:32em;font-weight:400;
 }
-/* 下载卡片 */
+/* ─── 下载按钮组 ─── */
 .dl{
-  margin-top:30px;display:flex;flex-direction:column;gap:12px;max-width:520px;
+  margin-top:36px;display:flex;flex-direction:column;gap:14px;max-width:520px;
 }
 .btn{
-  position:relative;display:flex;align-items:center;gap:14px;
-  padding:16px 20px;border-radius:14px;text-decoration:none;
-  border:1px solid var(--border);background:var(--panel);
-  backdrop-filter:blur(10px);
-  transition:.18s ease;overflow:hidden;
+  position:relative;display:flex;align-items:center;gap:16px;
+  padding:20px 22px;border-radius:var(--radius);text-decoration:none;
+  border:1px solid var(--border);background:var(--card);
+  box-shadow:var(--shadow-sm);
+  transition:.25s cubic-bezier(.2,.7,.3,1);
+  overflow:hidden;isolation:isolate;
 }
-.btn:hover{transform:translateY(-1px);border-color:#5b8cff55;background:#161d3c80}
+.btn::before{
+  content:"";position:absolute;inset:0;z-index:-1;opacity:0;
+  background:linear-gradient(135deg, #f0f5ff, #e6efff);
+  transition:opacity .25s;
+}
+.btn:hover{
+  transform:translateY(-3px);
+  box-shadow:var(--shadow-lg);
+  border-color:var(--border-strong);
+}
+.btn:hover::before{opacity:1}
 .btn.primary{
-  background:linear-gradient(135deg,#5b8cff,#4173e8);
-  border-color:#5b8cff00;color:#fff;
-  box-shadow:0 8px 28px #4173e855;
+  background:linear-gradient(135deg, #2f6bff 0%, #1f56e8 100%);
+  border-color:transparent;color:#fff;
+  box-shadow:0 8px 24px #2f6bff40, inset 0 1px 0 #ffffff33;
 }
-.btn.primary:hover{background:linear-gradient(135deg,#6b99ff,#4a7aec);border-color:#ffffff22}
+.btn.primary::before{background:linear-gradient(135deg, #4178ff, #2560f0);opacity:0}
+.btn.primary:hover{box-shadow:0 12px 40px #2f6bff55, inset 0 1px 0 #ffffff44}
+.btn.primary:hover::before{opacity:1}
 .btn .plat-icon{
-  width:36px;height:36px;border-radius:9px;display:grid;place-items:center;
-  background:#ffffff0d;flex:none;
+  width:44px;height:44px;border-radius:12px;display:grid;place-items:center;flex:none;
+  background:var(--primary-soft);color:var(--primary);
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1);
 }
-.btn.primary .plat-icon{background:#ffffff1c}
-.btn .plat-icon svg{width:20px;height:20px;fill:currentColor}
+.btn:hover .plat-icon{transform:scale(1.08)}
+.btn.primary .plat-icon{background:#ffffff22;color:#fff}
+.btn .plat-icon svg{width:22px;height:22px;fill:currentColor}
 .btn .meta{flex:1;min-width:0}
-.btn .meta b{display:block;font-size:15px;font-weight:600}
-.btn .meta span{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
-.btn.primary .meta span{color:#ffffffbd}
+.btn .meta b{display:block;font-size:16px;font-weight:600;letter-spacing:-.2px}
+.btn .meta span{display:block;font-size:13px;color:var(--muted);margin-top:3px;font-weight:400}
+.btn.primary .meta span{color:#ffffffb8}
 .btn .ver{
-  font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;
-  padding:4px 10px;border-radius:999px;border:1px solid var(--border);background:#00000026;
-  white-space:nowrap;
+  font-size:12px;font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums;
+  padding:5px 12px;border-radius:999px;background:#f0f4fb;
+  border:1px solid var(--border);white-space:nowrap;flex:none;
 }
 .btn.primary .ver{background:#ffffff22;border-color:#ffffff30;color:#fff}
-.btn .arr{
-  width:18px;height:18px;flex:none;opacity:.6;
-}
-.btn.primary .arr{opacity:.9}
+.btn .arr{width:18px;height:18px;flex:none;opacity:.5;transition:.25s}
+.btn:hover .arr{opacity:.9;transform:translateX(3px)}
+.btn.primary .arr{opacity:.85}
 .release-chip{
-  font-size:12.5px;color:var(--muted);
+  font-size:13px;color:var(--muted);font-weight:400;
   display:flex;align-items:center;gap:8px;
-  padding-top:6px;
+  padding:12px 16px;border-radius:11px;background:#f0f4fb;
+  border:1px solid var(--border);max-width:520px;
 }
-.release-chip a{color:var(--accent2);text-decoration:none}
+.release-chip a{color:var(--primary);text-decoration:none;font-weight:500}
 .release-chip a:hover{text-decoration:underline}
-/* 截图 */
+.release-chip svg{width:14px;height:14px;flex:none;opacity:.5}
+/* ─── 特性条 ─── */
+.stats{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:14px;
+  margin-top:36px;max-width:520px;
+}
+@media(max-width:480px){.stats{grid-template-columns:1fr}}
+.stat{
+  padding:18px 20px;border-radius:var(--radius-sm);border:1px solid var(--border);
+  background:var(--card);box-shadow:var(--shadow-sm);
+  display:flex;align-items:flex-start;gap:14px;
+  transition:.22s cubic-bezier(.2,.7,.3,1);
+}
+.stat:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);border-color:var(--border-strong)}
+.stat .icon{
+  width:36px;height:36px;border-radius:10px;flex:none;
+  background:var(--primary-soft);color:var(--primary);
+  display:grid;place-items:center;font-size:16px;
+}
+.stat b{display:block;font-size:14.5px;font-weight:600;color:var(--text);letter-spacing:-.1px}
+.stat span{display:block;font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.55}
+/* ─── 右侧截图 ─── */
+.shot-wrap{
+  position:relative;
+  animation:fadeUp .7s cubic-bezier(.2,.7,.3,1) .15s both;
+  perspective:1200px;
+}
+.shot-float{
+  position:relative;
+  transform:rotateX(2deg) rotateY(-4deg) rotateZ(.5deg);
+  transform-style:preserve-3d;
+  transition:transform .6s cubic-bezier(.2,.7,.3,1);
+  will-change:transform;
+}
+.shot-wrap:hover .shot-float{transform:rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(1.01)}
 .shot{
-  position:relative;border-radius:18px;overflow:hidden;
-  border:1px solid var(--border);
-  box-shadow:0 24px 80px #00000080, 0 2px 8px #00000040;
-  background:#0b1026;
+  position:relative;border-radius:var(--radius);overflow:hidden;
+  border:1px solid #dde5f5;
+  box-shadow:
+    0 2px 4px rgba(15,30,70,.04),
+    0 12px 40px rgba(15,30,70,.10),
+    0 32px 80px rgba(15,30,70,.12),
+    0 0 0 8px #ffffff,
+    0 0 0 9px #dde5f5;
+  background:#fff;
+  transition:box-shadow .4s;
+}
+.shot-wrap:hover .shot{
+  box-shadow:
+    0 4px 8px rgba(15,30,70,.05),
+    0 20px 60px rgba(15,30,70,.14),
+    0 48px 120px rgba(15,30,70,.16),
+    0 0 0 8px #ffffff,
+    0 0 0 9px #c8d8ff;
 }
 .shot::before{
-  content:"";display:block;height:30px;background:#141833;
+  content:"";display:block;height:36px;background:#f8faff;
   border-bottom:1px solid var(--border);
   background-image:
-    radial-gradient(circle at 14px 15px, #ff5f57 4.5px, transparent 4.6px),
-    radial-gradient(circle at 34px 15px, #febc2e 4.5px, transparent 4.6px),
-    radial-gradient(circle at 54px 15px, #28c840 4.5px, transparent 4.6px);
+    radial-gradient(circle at 18px 18px, #ff5f57 5px, transparent 5.5px),
+    radial-gradient(circle at 40px 18px, #febc2e 5px, transparent 5.5px),
+    radial-gradient(circle at 62px 18px, #28c840 5px, transparent 5.5px);
+  position:relative;
+}
+.shot::after{
+  content:"DeepSeek 桌面端";position:absolute;top:0;left:0;right:0;height:36px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:500;color:var(--muted);letter-spacing:.2px;
 }
 .shot img{width:100%;display:block}
-.badge{
-  position:absolute;top:44px;right:12px;
-  font-size:11px;background:#0000008a;border:1px solid var(--border);
-  padding:4px 10px;border-radius:999px;color:var(--muted);
+.shot-badge{
+  position:absolute;bottom:16px;right:16px;z-index:2;
+  font-size:11.5px;font-weight:500;color:var(--text2);
+  background:#ffffffe8;backdrop-filter:blur(8px);
+  border:1px solid var(--border-strong);
+  padding:6px 12px;border-radius:999px;
+  box-shadow:0 2px 8px rgba(15,30,70,.10);
 }
-.stats{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-  gap:14px;margin-top:22px;
+/* 装饰光斑 */
+.shot-glow{
+  position:absolute;inset:-40px;z-index:-1;pointer-events:none;
+  background:radial-gradient(closest-side, #2f6bff18, transparent 70%);
+  border-radius:40px;filter:blur(40px);
 }
-.stat{
-  padding:16px;border-radius:14px;border:1px solid var(--border);
-  background:var(--panel);backdrop-filter:blur(10px);
-}
-.stat b{display:block;font-size:14px;font-weight:600}
-.stat span{display:block;font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.5}
+/* ─── footer ─── */
 footer{
-  margin-top:70px;padding:28px 0 40px;border-top:1px solid var(--border);
-  color:var(--muted);font-size:12.5px;
-  display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;
+  margin-top:72px;padding:32px 0 48px;border-top:1px solid var(--border);
+  display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;
+  animation:fadeUp .7s cubic-bezier(.2,.7,.3,1) .25s both;
 }
-footer a{color:var(--accent2);text-decoration:none}
+footer .left{font-size:13px;color:var(--muted)}
+footer .right{display:flex;gap:20px;font-size:13px}
+footer a{color:var(--text2);text-decoration:none;font-weight:500;transition:color .2s}
+footer a:hover{color:var(--primary)}
+/* ─── 动画 ─── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{
+  0%{box-shadow:0 0 0 0 #22c55e55}
+  70%{box-shadow:0 0 0 8px transparent}
+  100%{box-shadow:0 0 0 0 transparent}
+}
+/* ─── 响应式 ─── */
+@media(max-width:979px){
+  .wrap{padding:0 20px}
+  .hero{gap:40px}
+  .shot-float{transform:none}
+  .shot-wrap:hover .shot-float{transform:none}
+}
 </style>
 </head>
 <body>
+<div class="bg"></div>
+<div class="bg-grid"></div>
+
 <div class="wrap">
 
   <header>
     <div class="brand">
-      <img src="assets/logo.png" alt="DeepSeek 桌面端">
+      <img class="brand-logo" src="assets/logo.png" alt="DeepSeek 桌面端">
       <div class="brand-name">DeepSeek 桌面端<small>DeepSeek Harness Desktop</small></div>
     </div>
     <a class="gh-link" href="https://github.com/InnoTechStudio/deepseek-harness-desktop" target="_blank" rel="noopener">
@@ -184,41 +311,70 @@ footer a{color:var(--accent2);text-decoration:none}
 
       <div class="dl" id="dl">
         <!-- macOS -->
-        <a class="btn primary" id="btn-mac" href="#" target="_blank" rel="noopener">
+        <a class="btn" id="btn-mac" href="#" target="_blank" rel="noopener">
           <span class="plat-icon"><svg viewBox="0 0 384 512"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg></span>
           <span class="meta"><b>下载 macOS 版</b><span>DMG · Apple Silicon · macOS 10.15+</span></span>
           <span class="ver" id="ver-mac">—</span>
-          <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+          <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
         </a>
         <!-- Windows -->
         <a class="btn" id="btn-win" href="#" target="_blank" rel="noopener">
           <span class="plat-icon"><svg viewBox="0 0 448 512"><path d="M0 93.7l183.6-25.3v177.4H0V93.7zm0 324.6l183.6 25.3V268.4H0v149.9zm203.8 28L448 480V268.4H203.8v177.9zm0-380.6v180.1H448V32L203.8 65.7z"/></svg></span>
           <span class="meta"><b>下载 Windows 版</b><span>Setup EXE · Windows 10 / 11（64 位）</span></span>
           <span class="ver" id="ver-win">—</span>
-          <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+          <svg class="arr" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
         </a>
         <div class="release-chip" id="release-chip">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.5v3.5l2.5 2.5"/></svg>
           正在读取 GitHub 最新版本…
         </div>
       </div>
 
       <div class="stats">
-        <div class="stat"><b>开箱即用</b><span>首次打开自动准备运行环境</span></div>
-        <div class="stat"><b>自动更新</b><span>客户端内核都会自动检查更新</span></div>
-        <div class="stat"><b>本地优先</b><span>数据仅存本机，不传云端</span></div>
-        <div class="stat"><b>离线可用</b><span>与服务完全运行在本地</span></div>
+        <div class="stat">
+          <span class="icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          </span>
+          <div><b>开箱即用</b><span>首次打开自动准备运行环境，全程有进度</span></div>
+        </div>
+        <div class="stat">
+          <span class="icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </span>
+          <div><b>自动更新</b><span>客户端内核自动检查新版本，一键更新</span></div>
+        </div>
+        <div class="stat">
+          <span class="icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+          <div><b>本地优先</b><span>数据仅存本机，不传云端，隐私无忧</span></div>
+        </div>
+        <div class="stat">
+          <span class="icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          </span>
+          <div><b>双端原生</b><span>macOS 保留交通灯，Windows 保留圆角</span></div>
+        </div>
       </div>
     </div>
 
-    <figure class="shot" id="shot-wrap">
-      <img id="shot" src="assets/mac-main.png" alt="DeepSeek 桌面端主界面（macOS）">
-      <figcaption class="badge" id="shot-badge">macOS 界面</figcaption>
-    </figure>
+    <div class="shot-wrap">
+      <div class="shot-glow"></div>
+      <div class="shot-float">
+        <figure class="shot">
+          <img id="shot" src="assets/mac-main.png" alt="DeepSeek 桌面端主界面">
+          <figcaption class="shot-badge" id="shot-badge">macOS 界面</figcaption>
+        </figure>
+      </div>
+    </div>
   </main>
 
   <footer>
-    <span>© <span id="year"></span> InnoTechStudio · MIT License</span>
-    <span><a href="https://github.com/InnoTechStudio/deepseek-harness-desktop/releases" target="_blank" rel="noopener">查看全部历史版本</a></span>
+    <span class="left">© <span id="year"></span> InnoTechStudio · MIT License</span>
+    <span class="right">
+      <a href="https://github.com/InnoTechStudio/deepseek-harness-desktop/releases" target="_blank" rel="noopener">历史版本</a>
+      <a href="https://github.com/InnoTechStudio/deepseek-harness-desktop/issues" target="_blank" rel="noopener">问题反馈</a>
+    </span>
   </footer>
 </div>
 
@@ -226,17 +382,41 @@ footer a{color:var(--accent2);text-decoration:none}
 (function(){
   const REPO = "InnoTechStudio/deepseek-harness-desktop";
   const API = "https://api.github.com/repos/" + REPO + "/releases/latest";
-  const shotMap = {
-    darwin: { src: "assets/mac-main.png", badge: "macOS 界面" },
-    win32:  { src: "assets/windows-main.png", badge: "Windows 界面" }
-  };
+
+  // 平台识别 → 截图切换 + 按钮排序
   const ua = navigator.userAgent.toLowerCase();
-  const platform = /macintosh|mac os x|darwin/.test(ua) ? "darwin"
-                 : /windows/.test(ua) ? "win32" : "darwin";
-  const s = shotMap[platform];
+  const isMac = /macintosh|mac os x|darwin/.test(ua);
+  const isWin = /windows/.test(ua);
+  const shotMap = {
+    mac: { src: "assets/mac-main.png", badge: "macOS 界面" },
+    win: { src: "assets/windows-main.png", badge: "Windows 界面" }
+  };
+  const plat = isWin ? "win" : "mac";
+  const s = shotMap[plat];
   document.getElementById("shot").src = s.src;
   document.getElementById("shot-badge").textContent = s.badge;
+  if (plat === "win") document.getElementById("dl").prepend(document.getElementById("btn-win"));
   document.getElementById("year").textContent = new Date().getFullYear();
+
+  // 3D 倾斜视差
+  const wrap = document.querySelector(".shot-wrap");
+  const float = document.querySelector(".shot-float");
+  if (window.matchMedia("(pointer: fine)").matches) {
+    let raf = null;
+    wrap.addEventListener("mousemove", e => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        const r = wrap.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - .5;
+        const y = (e.clientY - r.top) / r.height - .5;
+        float.style.transform = `rotateX(${-y * 6}deg) rotateY(${x * 8}deg) scale(1.02)`;
+        raf = null;
+      });
+    });
+    wrap.addEventListener("mouseleave", () => {
+      float.style.transform = "";
+    });
+  }
 
   function fmtSize(bytes){
     if (!bytes && bytes !== 0) return "—";
@@ -262,31 +442,32 @@ footer a{color:var(--accent2);text-decoration:none}
       const win = pickAsset(rel.assets || [], ["x64.*setup.*\\.exe$", "setup.*\\.exe$", "\\.exe$"]);
 
       if (mac){
-        const btn = document.getElementById("btn-mac");
-        btn.href = mac.browser_download_url;
+        document.getElementById("btn-mac").href = mac.browser_download_url;
         document.getElementById("ver-mac").textContent = tag + " · " + fmtSize(mac.size);
+        if (plat === "mac") document.getElementById("btn-mac").classList.add("primary");
       }
       if (win){
-        const btn = document.getElementById("btn-win");
-        btn.href = win.browser_download_url;
+        document.getElementById("btn-win").href = win.browser_download_url;
         document.getElementById("ver-win").textContent = tag + " · " + fmtSize(win.size);
+        if (plat === "win") document.getElementById("btn-win").classList.add("primary");
       }
-
-      // 如果当前平台有对应安装包，把卡片排序提前
-      if (platform === "darwin" && mac) document.getElementById("dl").prepend(document.getElementById("btn-mac"));
-      if (platform === "win32" && win) document.getElementById("dl").prepend(document.getElementById("btn-win"));
+      // 若平台未识别，mac 默认 primary
+      if (!mac && !win) {
+        document.getElementById("btn-mac").classList.add("primary");
+      }
 
       document.getElementById("version-pill").textContent = "当前最新版 " + tag;
       document.getElementById("release-chip").innerHTML =
-        "本页实时读取 GitHub Releases，GitHub 一更新，这里立即跟着更新 · " +
-        "<a href=\"" + (rel.html_url || "#") + "\" target=\"_blank\" rel=\"noopener\">查看 " + tag + " 更新说明</a>";
+        '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13.5 4.5L6 12 2.5 8.5"/></svg>' +
+        "实时同步 GitHub Releases · <a href=\"" + (rel.html_url || "#") + "\" target=\"_blank\" rel=\"noopener\">查看 " + tag + " 更新说明</a>";
     })
     .catch(err => {
       console.warn("release fetch failed:", err);
       document.getElementById("version-pill").textContent = "版本读取失败，仍可前往 GitHub 下载";
       document.getElementById("release-chip").innerHTML =
-        "暂时无法读取最新版本，请直接前往 " +
-        "<a href=\"https://github.com/" + REPO + "/releases\" target=\"_blank\" rel=\"noopener\">GitHub Releases</a>";
+        '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 5v3M8 11h.01"/></svg>' +
+        "暂时无法读取最新版本，请前往 <a href=\"https://github.com/" + REPO + "/releases\" target=\"_blank\" rel=\"noopener\">GitHub Releases</a>";
+      document.getElementById("btn-mac").classList.add("primary");
     });
 })();
 </script>
